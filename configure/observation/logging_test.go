@@ -1,7 +1,7 @@
 package observation
 
 import (
-	cb_context "github.com/AleckDarcy/ContextBus/core/context"
+	cb_context "github.com/AleckDarcy/ContextBus/context"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 
 	"github.com/rs/zerolog/log"

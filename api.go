@@ -1,10 +1,10 @@
-package bus
+package ContextBus
 
 import (
 	"github.com/AleckDarcy/ContextBus/background"
-	"github.com/AleckDarcy/ContextBus/core/configure"
-	"github.com/AleckDarcy/ContextBus/core/context"
-	"github.com/AleckDarcy/ContextBus/core/reaction"
+	"github.com/AleckDarcy/ContextBus/configure"
+	"github.com/AleckDarcy/ContextBus/configure/reaction"
+	"github.com/AleckDarcy/ContextBus/context"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 
 	"fmt"
@@ -29,10 +29,10 @@ func OnSubmission(ctx *context.Context, where *cb.EventWhere, who *cb.EventRecor
 	}
 	// write code base info
 
-	esp := background.EP.GetLatest()
+	esp := background.EnvironmentProfiler.GetLatest()
 
 	md := &cb.EventMetadata{
-		Id:  Bus.NewEventID(),
+		Id:  background.ObservationBus.NewEventID(),
 		Pcp: nil,
 		Esp: esp.Timestamp,
 	}
@@ -95,5 +95,5 @@ func OnSubmission(ctx *context.Context, where *cb.EventWhere, who *cb.EventRecor
 	}
 
 	// push EventData to bus
-	Bus.OnSubmit(reqCtx.GetConfigureID(), ed)
+	background.ObservationBus.OnSubmit(reqCtx.GetConfigureID(), ed)
 }

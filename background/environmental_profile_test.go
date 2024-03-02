@@ -7,25 +7,25 @@ import (
 )
 
 func TestEnvironmentalProfile(t *testing.T) {
-	t.Log(EP.latest)
+	t.Log(EnvironmentProfiler.latest)
 
 	signal := make(chan struct{})
-	go EnvironmentProfileProcessor(signal)
+	go EnvironmentProfiler.Run(signal)
 
 	<-time.After(11 * time.Second)
-	t.Log(EP.latest)
+	t.Log(EnvironmentProfiler.latest)
 }
 
 func TestGetEnvironmentProfile(t *testing.T) {
 	time.Sleep(time.Second)
 
-	pf1 := EP.GetEnvironmentProfile()
+	pf1 := EnvironmentProfiler.GetEnvironmentProfile()
 	t.Logf("%+v", pf1)
 
 	go runtime.GC()
 
 	for i := 0; i < 20; i++ {
-		pf := EP.GetEnvironmentProfile()
+		pf := EnvironmentProfiler.GetEnvironmentProfile()
 		t.Logf("%+v", pf)
 
 		if i == 10 {
@@ -36,6 +36,6 @@ func TestGetEnvironmentProfile(t *testing.T) {
 
 func BenchmarkGetEnvironmentProfile(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		EP.GetEnvironmentProfile()
+		EnvironmentProfiler.GetEnvironmentProfile()
 	}
 }

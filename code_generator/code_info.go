@@ -5,6 +5,15 @@ import (
 	"sync"
 )
 
+// Code generator parses user observation and re-generate the code to get:
+// 1. enriched observation: add and manage more information written by other parties;
+// 2. higher performance: avoid string parsing (annotation_parser.go), runtime information fetching (code_info.go)
+
+// init initialize storages that support generated code
+func init() {
+	CodeInfoStorage.infos = make([]CodeInfo, CodeInfo_End)
+}
+
 // CodeInfo Basic code base information containing
 // todo: code generator. Can be replaced by one-time effort.
 // new(sync.Once).do(func(){ info = GetCodeInfo })

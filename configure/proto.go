@@ -1,7 +1,7 @@
 package configure
 
 import (
-	"github.com/AleckDarcy/ContextBus/core/reaction"
+	"github.com/AleckDarcy/ContextBus/configure/reaction"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 )
 

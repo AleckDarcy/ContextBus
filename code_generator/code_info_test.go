@@ -11,7 +11,7 @@ func TestGetCodeInfoBasic(t *testing.T) {
 
 func BenchmarkGetCodeInfoBasic_Generated(b *testing.B) {
 	fc := func() {
-		info := CodeInfoStorage.GetCodeInfoBasic(CodeInfo_Test, CodeInfoSkip + 1)
+		info := CodeInfoStorage.GetCodeInfoBasic(CodeInfo_Test, CodeInfoSkip+1)
 		if info == nil {
 			b.Error(info)
 		}

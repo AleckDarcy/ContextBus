@@ -1,8 +1,10 @@
-package bus
+package ContextBus
 
 import (
-	"github.com/AleckDarcy/ContextBus/core/configure"
-	"github.com/AleckDarcy/ContextBus/core/context"
+	"github.com/AleckDarcy/ContextBus/background"
+	"github.com/AleckDarcy/ContextBus/configure"
+	"github.com/AleckDarcy/ContextBus/context"
+	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 
 	"sync"
@@ -10,8 +12,45 @@ import (
 	"time"
 )
 
+var cfg2 = &cb.Configure{
+	Reactions: nil,
+	Observations: map[string]*cb.ObservationConfigure{
+		"EventA": {
+			Logging: &cb.LoggingConfigure{
+				Timestamp: &cb.TimestampConfigure{Format: helper.TIME_FORMAT_RFC3339Nano},
+				Attrs:     []*cb.AttributeConfigure{cb.Test_AttributeConfigure_Rest_Key},
+				Out:       cb.LogOutType_LogOutType_, // omit print
+			},
+		},
+	},
+}
+
+var cfg3 = &cb.Configure{
+	Reactions: map[string]*cb.ReactionConfigure{
+		"EventD": {
+			Type: cb.ReactionType_FaultCrash,
+			PreTree: &cb.PrerequisiteTree{
+				Nodes: []*cb.PrerequisiteNode{
+					cb.NewPrerequisiteMessageNode(0, "EventA", &cb.ConditionTree{}, -1, nil),
+				},
+			}},
+		"EventC": {
+			Type: cb.ReactionType_FaultCrash,
+			PreTree: &cb.PrerequisiteTree{
+				Nodes: []*cb.PrerequisiteNode{
+					cb.NewPrerequisiteLogicNode(0, cb.LogicType_And_, -1, []int64{1, 2}),
+					cb.NewPrerequisiteMessageNode(1, "EventA",
+						cb.NewConditionTree([]*cb.ConditionNode{cb.Test_Condition_C_1_0}, nil), 0, nil),
+					cb.NewPrerequisiteMessageNode(2, "EventB",
+						cb.NewConditionTree([]*cb.ConditionNode{cb.Test_Condition_C_2_0}, nil), 0, nil),
+				},
+			},
+		},
+	},
+}
+
 func TestObservationBus_Observation(t *testing.T) {
-	go Bus.Run(nil)
+	go background.ObservationBus.Run(nil)
 
 	id := int64(2)
 	configure.ConfigureStore.SetConfigure(id, cfg2)
@@ -41,7 +80,7 @@ func TestObservationBus_Observation(t *testing.T) {
 }
 
 func TestObservationBus_Reaction(t *testing.T) {
-	go Bus.Run(nil)
+	go background.ObservationBus.Run(nil)
 
 	id := int64(3)
 	configure.ConfigureStore.SetConfigure(id, cfg3)

@@ -1,9 +1,8 @@
 package background
 
 import (
+	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
-	"github.com/AleckDarcy/ContextBus/public"
-
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/net"
@@ -21,7 +20,7 @@ type environmentProfiler struct {
 	lock   sync.RWMutex
 }
 
-var EP = &environmentProfiler{
+var EnvironmentProfiler = &environmentProfiler{
 	latest: &cb.EnvironmentalProfile{
 		Hardware: &cb.HardwareProfile{},
 	},
@@ -64,7 +63,7 @@ func (e *environmentProfiler) GetEnvironmentProfile() *cb.EnvironmentalProfile {
 
 	signal := make(chan *cb.CPUProfile)
 	go func(signal chan *cb.CPUProfile) {
-		if c, err := cpu.Percent(public.CPU_PROFILE_DURATION, false); err == nil {
+		if c, err := cpu.Percent(helper.CPU_PROFILE_DURATION, false); err == nil {
 			signal <- &cb.CPUProfile{
 				Percent: c[0],
 			}
@@ -126,7 +125,7 @@ func (e *environmentProfiler) GetEnvironmentProfile() *cb.EnvironmentalProfile {
 	select {
 	case c := <-signal:
 		ep.Hardware.Cpu = c
-	case <-time.After(public.CPU_PROFILE_DURATION_MAX):
+	case <-time.After(helper.CPU_PROFILE_DURATION_MAX):
 		// todo: report error
 	}
 
@@ -137,4 +136,18 @@ func (e *environmentProfiler) GetEnvironmentProfile() *cb.EnvironmentalProfile {
 	e.lock.Unlock()
 
 	return ep
+}
+
+func (e *environmentProfiler) Run(sig chan struct{}) {
+	e.GetEnvironmentProfile()
+
+	for {
+		select {
+		case <-sig:
+
+			return
+		case <-time.After(helper.ENV_PROFILE_INTERVAL):
+			e.GetEnvironmentProfile()
+		}
+	}
 }

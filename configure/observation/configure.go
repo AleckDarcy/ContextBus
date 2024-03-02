@@ -1,13 +1,12 @@
 package observation
 
 import (
-	"github.com/AleckDarcy/ContextBus/core/encoder"
-	cb "github.com/AleckDarcy/ContextBus/proto"
-	"github.com/AleckDarcy/ContextBus/public"
-
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/AleckDarcy/ContextBus/helper"
+	cb "github.com/AleckDarcy/ContextBus/proto"
 )
 
 // the Do function
@@ -47,23 +46,23 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 	er := ed.Event
 
 	e := newEvent()
-	e.buf = encoder.JSONEncoder.BeginObject(e.buf)
+	e.buf = helper.JSONEncoder.BeginObject(e.buf)
 
-	e.buf = encoder.JSONEncoder.AppendKey(e.buf, "level")
-	e.buf = encoder.JSONEncoder.AppendString(e.buf, "info")
+	e.buf = helper.JSONEncoder.AppendKey(e.buf, "level")
+	e.buf = helper.JSONEncoder.AppendString(e.buf, "info")
 
-	e.buf = encoder.JSONEncoder.AppendKey(e.buf, "time")
+	e.buf = helper.JSONEncoder.AppendKey(e.buf, "time")
 
-	e.buf = encoder.JSONEncoder.BeginString(e.buf)
+	e.buf = helper.JSONEncoder.BeginString(e.buf)
 	if ts := c.Timestamp; ts == nil {
-		e.buf = time.Unix(0, er.When.Time).AppendFormat(e.buf, public.TIME_FORMAT_DEFAULT)
+		e.buf = time.Unix(0, er.When.Time).AppendFormat(e.buf, helper.TIME_FORMAT_DEFAULT)
 	} else {
 		e.buf = time.Unix(0, er.When.Time).AppendFormat(e.buf, ts.Format)
 	}
-	e.buf = encoder.JSONEncoder.EndString(e.buf)
+	e.buf = helper.JSONEncoder.EndString(e.buf)
 
 	// do message
-	e.buf = encoder.JSONEncoder.AppendKey(e.buf, "message")
+	e.buf = helper.JSONEncoder.AppendKey(e.buf, "message")
 	msg := er.What.Application.GetMessage()
 	paths := er.What.Application.GetPaths()
 	values := make([]interface{}, len(paths))
@@ -74,18 +73,18 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 			values[i] = fmt.Sprintf("!error(%s)", err.Error())
 		}
 	}
-	e.buf = encoder.JSONEncoder.AppendString(e.buf, fmt.Sprintf(msg, values...))
+	e.buf = helper.JSONEncoder.AppendString(e.buf, fmt.Sprintf(msg, values...))
 
 	// do tag
 	if len(c.Attrs) != 0 {
-		e.buf = encoder.JSONEncoder.AppendKey(e.buf, "tags")
+		e.buf = helper.JSONEncoder.AppendKey(e.buf, "tags")
 		e.buf = DoTagFaster(e.buf, c.Attrs, er)
 
 		//tags := DoTag(c.Attrs, er)
 		//e.buf = encoder.JSONEncoder.AppendTags(e.buf, tags)
 	}
 
-	e.buf = encoder.JSONEncoder.EndObject(e.buf)
+	e.buf = helper.JSONEncoder.EndObject(e.buf)
 	str := string(e.buf)
 	e.finalize()
 
@@ -200,14 +199,14 @@ func DoTag(cfg []*cb.AttributeConfigure, er *cb.EventRepresentation) map[string]
 }
 
 func DoTagFaster(dst []byte, cfg []*cb.AttributeConfigure, er *cb.EventRepresentation) []byte {
-	dst = encoder.JSONEncoder.BeginObject(dst)
+	dst = helper.JSONEncoder.BeginObject(dst)
 
 	for _, path := range cfg {
 		str, err := er.What.GetValue(path.Path)
 
 		if err == nil {
-			dst = encoder.JSONEncoder.AppendKey(dst, path.Name)
-			dst = encoder.JSONEncoder.AppendString(dst, str)
+			dst = helper.JSONEncoder.AppendKey(dst, path.Name)
+			dst = helper.JSONEncoder.AppendString(dst, str)
 		}
 	}
 

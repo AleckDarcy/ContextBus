@@ -1,4 +1,4 @@
-package encoder
+package helper
 
 type jsonEncoder struct{}
 

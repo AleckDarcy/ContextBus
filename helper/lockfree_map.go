@@ -1,4 +1,4 @@
-package bus
+package helper
 
 import (
 	cb "github.com/AleckDarcy/ContextBus/proto"

@@ -1,30 +1,30 @@
-package bus
+package background
 
 import (
-	"github.com/AleckDarcy/ContextBus/core/configure"
-	"github.com/AleckDarcy/ContextBus/core/observation"
+	"github.com/AleckDarcy/ContextBus/configure"
+	"github.com/AleckDarcy/ContextBus/configure/observation"
+	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
-	"github.com/AleckDarcy/ContextBus/public"
 
 	"runtime"
 	"sync/atomic"
 	"time"
 )
 
-// Payload is the package of event data inside LockFreeQueue
-type Payload struct {
+// EventDataPayload is the package of event data inside LockFreeQueue
+type EventDataPayload struct {
 	cfgID int64
 	ed    *cb.EventData
 }
 
 type observationBus struct {
-	queue  *LockFreeQueue
+	queue  *helper.LockFreeQueue
 	signal chan struct{}
 	eveID  uint64
 }
 
-var Bus = &observationBus{
-	queue:  NewLockFreeQueue(),
+var ObservationBus = &observationBus{
+	queue:  helper.NewLockFreeQueue(),
 	signal: make(chan struct{}, 1),
 }
 
@@ -33,7 +33,7 @@ func (b *observationBus) NewEventID() uint64 {
 }
 
 func (b *observationBus) OnSubmit(cfgID int64, ed *cb.EventData) {
-	b.queue.Enqueue(&Payload{
+	b.queue.Enqueue(&EventDataPayload{
 		cfgID: cfgID,
 		ed:    ed,
 	})
@@ -56,7 +56,7 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 			return
 		}
 
-		pay := v.(*Payload)
+		pay := v.(*EventDataPayload)
 		if cfg := configure.ConfigureStore.GetConfigure(pay.cfgID); cfg != nil {
 			if obs := cfg.GetObservationConfigure(pay.ed.Event.Recorder.Name); obs != nil {
 				cntL_, cntT_, cntM_ := obs.Do(pay.ed)
@@ -82,7 +82,7 @@ func (b *observationBus) Run(sig chan struct{}) {
 			return
 		case <-b.signal: // triggered by collector notification
 			cnt, cntL, cntT, cntM = b.doObservation()
-		case <-time.After(public.BUS_OBSERVATION_QUEUE_INTERVAL): // triggered by timer
+		case <-time.After(helper.BUS_OBSERVATION_QUEUE_INTERVAL): // triggered by timer
 			cnt, cntL, cntT, cntM = b.doObservation()
 		}
 
