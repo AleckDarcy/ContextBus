@@ -1,15 +1,15 @@
 package observation
 
 import (
-	"fmt"
 	cb "github.com/AleckDarcy/ContextBus/proto"
-	"io"
-	"net/http"
-	"net/http/httptest"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 )
 

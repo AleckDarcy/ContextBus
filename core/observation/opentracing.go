@@ -1,6 +1,10 @@
 package observation
 
 import (
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/rs/zerolog/log"
+	"github.com/uber/jaeger-client-go/config"
+
 	"fmt"
 	"io"
 	"net/http"
@@ -8,10 +12,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/rs/zerolog/log"
-	"github.com/uber/jaeger-client-go/config"
 )
 
 var (

@@ -1,6 +1,8 @@
 package bus
 
-import cb "github.com/AleckDarcy/ContextBus/proto"
+import (
+	cb "github.com/AleckDarcy/ContextBus/proto"
+)
 
 type eventDataMap struct {
 	mp map[uint64]*cb.EventData

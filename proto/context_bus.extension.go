@@ -2,10 +2,10 @@ package proto
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"time"
 
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Be careful of how ProtoBuffer deals with variable-size data structures such as map and slice

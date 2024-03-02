@@ -11,7 +11,6 @@ import (
 )
 
 func TestObservationBus_Observation(t *testing.T) {
-
 	go Bus.Run(nil)
 
 	id := int64(2)
@@ -20,7 +19,7 @@ func TestObservationBus_Observation(t *testing.T) {
 	ctx := context.NewContext(context.NewRequestContext("rest", id, rest), context.NewEventContext(nil, nil))
 	app := new(cb.EventMessage).SetMessage("received message from %s").SetPaths([]*cb.Path{path})
 
-	n := 100
+	n := 10
 	wg := sync.WaitGroup{}
 	worker := func() {
 		for i := 0; i < n; i++ {

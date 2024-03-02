@@ -1,8 +1,9 @@
 package reaction
 
 import (
-	"errors"
 	cb "github.com/AleckDarcy/ContextBus/proto"
+
+	"errors"
 )
 
 // Check if prerequisites are accomplished.

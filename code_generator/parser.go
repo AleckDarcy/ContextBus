@@ -2,6 +2,7 @@ package code_generator
 
 import (
 	"github.com/AleckDarcy/ContextBus/helper"
+
 	"regexp"
 	"strings"
 )
@@ -33,7 +34,7 @@ func (g *Path) ParseMessage(msg string) (string, []*Path) {
 	idxs := pathReg.FindAllStringIndex(msg, -1)
 	fmtLen := len(msg)
 	for _, idx := range idxs {
-		fmtLen += 2 - (idx[1] - idx[0])  // 2 bytes for %s
+		fmtLen += 2 - (idx[1] - idx[0]) // 2 bytes for %s
 	}
 
 	fmtBytes := make([]byte, fmtLen)
@@ -42,12 +43,12 @@ func (g *Path) ParseMessage(msg string) (string, []*Path) {
 	for _, idx := range idxs {
 
 		if idx[0] != id {
-			copy(fmtBytes[offset:], msg[id: idx[0]])
+			copy(fmtBytes[offset:], msg[id:idx[0]])
 			offset += idx[0] - id
 		}
 
 		copy(fmtBytes[offset:], "%s")
-		paths = append(paths, PathHelper.ParsePath(msg[idx[0]: idx[1]]))
+		paths = append(paths, PathHelper.ParsePath(msg[idx[0]:idx[1]]))
 
 		offset += 2 // 2 bytes for %s
 		id = idx[1]

@@ -1,6 +1,8 @@
 package reaction
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestPrerequisiteTree_Check_1(t *testing.T) {
 	snapshot := Tree1.InitializeSnapshot()
