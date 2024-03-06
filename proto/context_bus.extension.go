@@ -2,6 +2,7 @@ package proto
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/uber/jaeger-client-go"
 
 	"errors"
 	"fmt"
@@ -446,6 +447,10 @@ func (m *EventRepresentation) WithWhat(what *EventWhat) *EventWhat {
 	}
 
 	return m.What
+}
+
+func (m *SpanMetadata) ParentSpanContext() jaeger.SpanContext {
+	return jaeger.NewSpanContext(jaeger.TraceID{High: m.TraceIdHigh, Low: m.TraceIdLow}, jaeger.SpanID(m.ParentId), jaeger.SpanID(m.ParentId), m.Sampled, m.Baggage)
 }
 
 func (m *EventData) GetPreviousEventData(name string) *EventData {

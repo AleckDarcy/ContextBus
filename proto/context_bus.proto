@@ -183,6 +183,8 @@ message TracingConfigure {
     string name                       = 1;
     string prev_name                  = 2; // event pair
     repeated AttributeConfigure attrs = 3;
+
+    string parent_name = 11; // span name
 }
 
 enum MetricType {
@@ -370,6 +372,15 @@ message ParentChildPointers {
     repeated uint64 children = 2;
 }
 
+message SpanMetadata {
+    bool sampled                = 1;
+    uint64 trace_id_high        = 2;
+    uint64 trace_id_low         = 3;
+    uint64 span_id              = 4;
+    uint64 parent_id            = 5;
+    map<string, string> baggage = 6;
+}
+
 message EventMetadata {
     uint64 id               = 1;
     ParentChildPointers pcp = 2; // parent-children pointer
@@ -380,7 +391,10 @@ message EventMetadata {
 message EventData {
     EventRepresentation event = 1;
     EventMetadata metadata    = 2;
-    EventData prevEventData   = 3;
+
+    // event pairs for tracing and metrics
+    EventData prev_event_data  = 11;
+    SpanMetadata span_metadata = 12;
 }
 
 /******************** from 3mb WIP */
@@ -404,6 +418,7 @@ message Record {
     string uuid         = 4;
     string service      = 5;
 }
+
 /******************** Prometheus ********************/
 message PrometheusOpts {
     int64 id = 1;
@@ -469,6 +484,7 @@ message Payload {
     PrerequisiteSnapshots addition  = 4; // witnessed by the current handler
 
     // message-level
-    MessageType m_type = 11;
-    string uuid        = 12;
+    SpanMetadata parent = 11;
+    MessageType m_type  = 12;
+    string uuid         = 13;
 }
