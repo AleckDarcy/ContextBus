@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -470,6 +471,7 @@ func (t *Tracer) RandomID() uint64 {
 // randomID generates a random trace/span ID, using tracer.random() generator.
 // It never returns 0.
 func (t *Tracer) randomID() uint64 {
+	debug.PrintStack()
 	val := t.randomNumber()
 	for val == 0 {
 		val = t.randomNumber()

@@ -1,9 +1,10 @@
 package observation
 
 import (
-	opentracing "github.com/opentracing/opentracing-go"
+	opentracing "github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/config"
+
 	"github.com/rs/zerolog/log"
-	"github.com/uber/jaeger-client-go/config"
 
 	"fmt"
 	"io"

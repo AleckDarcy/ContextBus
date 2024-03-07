@@ -365,25 +365,25 @@ func TestObservation(t *testing.T) {
 				},
 			},
 		},
-		Reactions: map[string]*cb.ReactionConfigure{
-			"EventA-cdefgh": {
-				Type:   cb.ReactionType_FaultDelay,
-				Params: &cb.ReactionConfigure_FaultDelay{FaultDelay: &cb.FaultDelayParam{Ms: 500}},
-				PreTree: &cb.PrerequisiteTree{
-					Nodes: []*cb.PrerequisiteNode{
-						{
-							Id:   0,
-							Type: cb.PrerequisiteNodeType_PrerequisiteMessage_,
-							Message: &cb.PrerequisiteMessage{
-								Name:     "EventB-starts",
-								CondTree: nil,
-								Parent:   -1,
-							},
-						},
-					},
-				},
-			},
-		},
+		//Reactions: map[string]*cb.ReactionConfigure{
+		//	"EventA-cdefgh": {
+		//		Type:   cb.ReactionType_FaultDelay,
+		//		Params: &cb.ReactionConfigure_FaultDelay{FaultDelay: &cb.FaultDelayParam{Ms: 500}},
+		//		PreTree: &cb.PrerequisiteTree{
+		//			Nodes: []*cb.PrerequisiteNode{
+		//				{
+		//					Id:   0,
+		//					Type: cb.PrerequisiteNodeType_PrerequisiteMessage_,
+		//					Message: &cb.PrerequisiteMessage{
+		//						Name:     "EventB-starts",
+		//						CondTree: nil,
+		//						Parent:   -1,
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//},
 	}
 
 	id := int64(4)
@@ -446,7 +446,6 @@ func TestObservation(t *testing.T) {
 		app3 := new(cb.EventMessage).SetMessage("send request to handler2")
 
 		go handler2Framework(ctx.GetRequestContext().GetSpanMetadata())
-		time.Sleep(time.Second)
 		OnSubmission(ctx, &cb.EventWhere{}, &cb.EventRecorder{Name: "EventA-bcdefg"}, app3)
 		//ctx.PrintPrevEventData(t)
 

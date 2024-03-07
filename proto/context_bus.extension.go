@@ -451,7 +451,7 @@ func (m *EventRepresentation) WithWhat(what *EventWhat) *EventWhat {
 }
 
 func (m *SpanMetadata) ParentSpanContext() jaeger.SpanContext {
-	return jaeger.NewSpanContext(jaeger.TraceID{High: m.TraceIdHigh, Low: m.TraceIdLow}, jaeger.SpanID(m.SpanId), jaeger.SpanID(m.ParentId), m.Sampled, m.Baggage)
+	return jaeger.NewSpanContext(jaeger.TraceID{High: m.TraceIdHigh, Low: m.TraceIdLow}, jaeger.SpanID(m.ParentId), 0, m.Sampled, m.Baggage)
 }
 
 func (m *EventData) GetPreviousEventData(name string) *EventData {
