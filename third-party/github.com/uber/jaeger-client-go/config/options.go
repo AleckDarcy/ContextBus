@@ -15,10 +15,10 @@
 package config
 
 import (
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-lib/metrics"
+	opentracing "github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-lib/metrics"
 
-	"github.com/uber/jaeger-client-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 )
 
 // Option is a function that sets some option on the client.

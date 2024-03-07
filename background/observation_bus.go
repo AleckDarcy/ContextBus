@@ -1,11 +1,18 @@
 package background
 
 import (
+	// Context Bus
 	"github.com/AleckDarcy/ContextBus/configure"
 	"github.com/AleckDarcy/ContextBus/configure/observation"
+	"github.com/AleckDarcy/ContextBus/context"
 	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 
+	// third-party
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/config"
+
+	"fmt"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -13,12 +20,13 @@ import (
 
 // EventDataPayload is the package of event data inside LockFreeQueue
 type EventDataPayload struct {
-	cfgID int64
-	ed    *cb.EventData
+	ctx *context.Context
+	ed  *cb.EventData
 }
 
 type observationBus struct {
 	queue  *helper.LockFreeQueue
+	tracer opentracing.Tracer
 	signal chan struct{}
 	eveID  uint64
 }
@@ -28,14 +36,18 @@ var ObservationBus = &observationBus{
 	signal: make(chan struct{}, 1),
 }
 
+func (b *observationBus) GetTracer() opentracing.Tracer {
+	return b.tracer
+}
+
 func (b *observationBus) NewEventID() uint64 {
 	return atomic.AddUint64(&b.eveID, 1)
 }
 
-func (b *observationBus) OnSubmit(cfgID int64, ed *cb.EventData) {
+func (b *observationBus) OnSubmit(ctx *context.Context, ed *cb.EventData) {
 	b.queue.Enqueue(&EventDataPayload{
-		cfgID: cfgID,
-		ed:    ed,
+		ctx: ctx,
+		ed:  ed,
 	})
 
 	// try to invoke
@@ -57,9 +69,9 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 		}
 
 		pay := v.(*EventDataPayload)
-		if cfg := configure.ConfigureStore.GetConfigure(pay.cfgID); cfg != nil {
+		if cfg := configure.ConfigureStore.GetConfigure(pay.ctx.GetRequestContext().GetConfigureID()); cfg != nil {
 			if obs := cfg.GetObservationConfigure(pay.ed.Event.Recorder.Name); obs != nil {
-				cntL_, cntT_, cntM_ := obs.Do(pay.ed)
+				cntL_, cntT_, cntM_ := obs.Do(pay.ctx, pay.ed)
 				cntL += cntL_
 				cntT += cntT_
 				cntM += cntM_
@@ -75,10 +87,29 @@ type observationCounter struct {
 }
 
 func (b *observationBus) Run(sig chan struct{}) {
+	var tracerCfg = &config.Configuration{
+		ServiceName: "test-service",
+		Sampler: &config.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+	}
+
+	tracer, closer, err := tracerCfg.NewTracer()
+	if err != nil {
+		panic(fmt.Sprintf("cannot init tracer: %v", err))
+	}
+
+	b.tracer = tracer
+
+	// todo: report ready
+
 	for {
 		cnt, cntL, cntT, cntM := 0, 0, 0, 0
 		select {
 		case <-sig:
+			closer.Close()
+
 			return
 		case <-b.signal: // triggered by collector notification
 			cnt, cntL, cntT, cntM = b.doObservation()

@@ -20,9 +20,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/ext"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/log"
 )
 
 // Span implements opentracing.Span

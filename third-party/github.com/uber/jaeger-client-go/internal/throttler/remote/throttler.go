@@ -23,8 +23,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/uber/jaeger-client-go"
-	"github.com/uber/jaeger-client-go/utils"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/utils"
 )
 
 const (

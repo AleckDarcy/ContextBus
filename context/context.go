@@ -2,6 +2,7 @@ package context
 
 import (
 	cb "github.com/AleckDarcy/ContextBus/proto"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 
 	"testing"
 )
@@ -11,6 +12,7 @@ type RequestContext struct {
 	lib         string // name of network API
 	configureID int64
 	event       *cb.EventMessage
+	span        *cb.SpanMetadata // parent span
 }
 
 func NewRequestContext(lib string, configureID int64, msg *cb.EventMessage) *RequestContext {
@@ -31,6 +33,16 @@ func (c *RequestContext) GetConfigureID() int64 {
 
 func (c *RequestContext) GetEventMessage() *cb.EventMessage {
 	return c.event
+}
+
+func (c *RequestContext) SetSpanMetadata(sm *cb.SpanMetadata) *RequestContext {
+	c.span = sm
+
+	return c
+}
+
+func (c *RequestContext) GetSpanMetadata() *cb.SpanMetadata {
+	return c.span
 }
 
 // EventContext is the context associated with each observation
@@ -95,6 +107,9 @@ func (c *EventContext) GetPrevEvent() (*EventContext, *cb.EventData) {
 type Context struct {
 	reqCtx *RequestContext
 	eveCtx *EventContext
+
+	tracer opentracing.Tracer
+	span   *cb.SpanMetadata
 }
 
 func NewContext(reqCtx *RequestContext, eveCtx *EventContext) *Context {
@@ -135,4 +150,14 @@ func (c *Context) SetEventContext(eveCtx *EventContext) *Context {
 	c.eveCtx = eveCtx
 
 	return c
+}
+
+func (c *Context) SetTracer(tracer opentracing.Tracer) *Context {
+	c.tracer = tracer
+
+	return c
+}
+
+func (c *Context) GetTracer() opentracing.Tracer {
+	return c.tracer
 }

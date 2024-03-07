@@ -72,6 +72,11 @@ func OnSubmission(ctx *context.Context, where *cb.EventWhere, who *cb.EventRecor
 			}
 			ed.PrevEventData = prevED
 		}
+
+		obs.Prepare(ctx, ed)
+		if ed.SpanMetadata != nil {
+			ctx.GetRequestContext().SetSpanMetadata(ed.SpanMetadata)
+		}
 	}
 
 	if rac := cfg.GetReaction(who.Name); rac != nil {
@@ -95,5 +100,5 @@ func OnSubmission(ctx *context.Context, where *cb.EventWhere, who *cb.EventRecor
 	}
 
 	// push EventData to bus
-	background.ObservationBus.OnSubmit(reqCtx.GetConfigureID(), ed)
+	background.ObservationBus.OnSubmit(ctx, ed)
 }

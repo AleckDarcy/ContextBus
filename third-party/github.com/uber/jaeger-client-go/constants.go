@@ -17,7 +17,7 @@ package jaeger
 import (
 	"fmt"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 )
 
 const (

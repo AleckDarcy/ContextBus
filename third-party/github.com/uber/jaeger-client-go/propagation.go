@@ -24,7 +24,7 @@ import (
 	"strings"
 	"sync"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	opentracing "github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 )
 
 // Injector is responsible for injecting SpanContext instances in a manner suitable

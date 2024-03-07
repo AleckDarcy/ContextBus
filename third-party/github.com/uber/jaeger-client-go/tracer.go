@@ -24,13 +24,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/ext"
 
-	"github.com/uber/jaeger-client-go/internal/baggage"
-	"github.com/uber/jaeger-client-go/internal/throttler"
-	"github.com/uber/jaeger-client-go/log"
-	"github.com/uber/jaeger-client-go/utils"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/internal/baggage"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/internal/throttler"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/log"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/utils"
 )
 
 // Tracer implements opentracing.Tracer.
@@ -215,7 +215,6 @@ func (t *Tracer) startSpanWithOptions(
 	if options.StartTime.IsZero() {
 		options.StartTime = t.timeNow()
 	}
-
 	// Predicate whether the given span context is an empty reference
 	// or may be used as parent / debug ID / baggage items source
 	isEmptyReference := func(ctx SpanContext) bool {
@@ -291,8 +290,13 @@ func (t *Tracer) startSpanWithOptions(
 				ctx.spanID = parent.spanID
 				ctx.parentID = parent.parentID
 			} else {
-				ctx.spanID = SpanID(t.randomID())
-				print("heihei")
+				// managed by ContextBus
+				if options.SpanID != 0 {
+					print("replaced")
+					ctx.spanID = SpanID(options.SpanID)
+				} else {
+					ctx.spanID = SpanID(t.randomID())
+				}
 				ctx.parentID = parent.spanID
 			}
 			ctx.samplingState = parent.samplingState
@@ -456,6 +460,11 @@ func (t *Tracer) reportSpan(sp *Span) {
 	}
 
 	sp.Release()
+}
+
+// RandomID is made public for ContextBus
+func (t *Tracer) RandomID() uint64 {
+	return t.randomID()
 }
 
 // randomID generates a random trace/span ID, using tracer.random() generator.

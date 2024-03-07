@@ -21,15 +21,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go/utils"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/utils"
 
-	"github.com/uber/jaeger-client-go"
-	"github.com/uber/jaeger-client-go/internal/baggage/remote"
-	throttler "github.com/uber/jaeger-client-go/internal/throttler/remote"
-	"github.com/uber/jaeger-client-go/rpcmetrics"
-	"github.com/uber/jaeger-client-go/transport"
-	"github.com/uber/jaeger-lib/metrics"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/internal/baggage/remote"
+	throttler "github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/internal/throttler/remote"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/rpcmetrics"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/transport"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-lib/metrics"
 )
 
 const defaultSamplingProbability = 0.001

@@ -20,8 +20,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/uber/jaeger-client-go/thrift-gen/sampling"
-	"github.com/uber/jaeger-client-go/utils"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/thrift-gen/sampling"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/utils"
 )
 
 const (

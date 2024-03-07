@@ -211,6 +211,15 @@ func (c SpanContext) SetFirehose() {
 	c.samplingState.setFirehose()
 }
 
+func (c SpanContext) ToString() string {
+	var flags int32
+	if c.samplingState != nil {
+		flags = c.samplingState.stateFlags.Load()
+	}
+
+	return fmt.Sprintf("%d,%d:%d:%d:%x", c.traceID.High, c.traceID.Low, uint64(c.spanID), uint64(c.parentID), flags)
+}
+
 func (c SpanContext) String() string {
 	var flags int32
 	if c.samplingState != nil {

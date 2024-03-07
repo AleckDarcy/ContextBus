@@ -15,7 +15,7 @@
 package jaeger
 
 import (
-	"github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 )
 
 // TODO this file should not be needed after TChannel PR.

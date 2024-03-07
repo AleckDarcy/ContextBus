@@ -3,7 +3,7 @@ package opentracing
 import (
 	"time"
 
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/log"
 )
 
 // SpanContext represents Span state that must propagate to descendant Spans and across process

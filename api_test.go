@@ -210,6 +210,8 @@ func TestObservation(t *testing.T) {
 	})
 	defer background.Stop()
 
+	time.Sleep(time.Second)
+
 	// set MetricVecStore
 	observation.MetricVecStore.Set(prometheusCfg)
 
@@ -220,6 +222,14 @@ func TestObservation(t *testing.T) {
 				Logging: &cb.LoggingConfigure{
 					Attrs: []*cb.AttributeConfigure{cb.Test_AttributeConfigure_Rest_Key, cb.Test_AttributeConfigure_Rest_Key_},
 					Out:   cb.LogOutType_Stdout,
+				},
+				Tracing: &cb.TracingConfigure{
+					Name:     "EventA",
+					PrevName: "",
+					Attrs: []*cb.AttributeConfigure{
+						cb.Test_AttributeConfigure_Rest_Method,
+						cb.Test_AttributeConfigure_Rest_Handler,
+					},
 				},
 				Metrics: []*cb.MetricsConfigure{
 					{
@@ -300,6 +310,14 @@ func TestObservation(t *testing.T) {
 				Logging: &cb.LoggingConfigure{
 					Attrs: []*cb.AttributeConfigure{cb.Test_AttributeConfigure_Rest_Key, cb.Test_AttributeConfigure_Rest_Key_},
 					Out:   cb.LogOutType_Stdout,
+				},
+				Tracing: &cb.TracingConfigure{
+					Name:     "EventB",
+					PrevName: "",
+					Attrs: []*cb.AttributeConfigure{
+						cb.Test_AttributeConfigure_Rest_Method,
+						cb.Test_AttributeConfigure_Rest_Handler,
+					},
 				},
 				Metrics: []*cb.MetricsConfigure{
 					{
@@ -396,19 +414,20 @@ func TestObservation(t *testing.T) {
 	}
 
 	// mocked framework for handler2
-	go func() {
+	handler2Framework := func(sm *cb.SpanMetadata) {
 		// handler2 framework inbound
 		req := <-requestNetwork
 		id := req.cbPayload.ConfigId
 		cfg := configure.ConfigureStore.GetConfigure(id)
 		ctx1 := new(context.Context).
-			SetRequestContext(context.NewRequestContext("rest", id, rest2)).
-			SetEventContext(new(context.EventContext).SetPrerequisiteSnapshots(req.cbPayload.Snapshots).SetOffsetSnapshots(cfg.InitializeSnapshots()))
+			SetRequestContext(context.NewRequestContext("rest", id, rest2).SetSpanMetadata(sm)).
+			SetEventContext(new(context.EventContext).SetPrerequisiteSnapshots(req.cbPayload.Snapshots).SetOffsetSnapshots(cfg.InitializeSnapshots())).
+			SetTracer(background.ObservationBus.GetTracer())
 		rsp, err := handler2(ctx1, req)
 		_ = err
 		sendResponse(rsp)
 		// handler2 framework outbound
-	}()
+	}
 
 	handler1 := func(ctx *context.Context, req *request) (rsp *response, err error) {
 		ctx.GetEventContext().SetCodeInfoBasic(&cb.CodeBaseInfo{Name: "handler1", File: "path/file1.go", Line: 140})
@@ -425,6 +444,9 @@ func TestObservation(t *testing.T) {
 		// handler1 outbound: calling handler2
 		ctx.GetEventContext().SetCodeInfoBasic(&cb.CodeBaseInfo{Name: "handler1", File: "path/file1.go", Line: 150})
 		app3 := new(cb.EventMessage).SetMessage("send request to handler2")
+
+		go handler2Framework(ctx.GetRequestContext().GetSpanMetadata())
+		time.Sleep(time.Second)
 		OnSubmission(ctx, &cb.EventWhere{}, &cb.EventRecorder{Name: "EventA-bcdefg"}, app3)
 		//ctx.PrintPrevEventData(t)
 
@@ -449,9 +471,17 @@ func TestObservation(t *testing.T) {
 	}
 
 	start := time.Now().UnixNano()
+	sm := &cb.SpanMetadata{
+		Sampled:     true,
+		TraceIdHigh: background.ObservationBus.GetTracer().RandomID(),
+		TraceIdLow:  background.ObservationBus.GetTracer().RandomID(),
+		SpanId:      background.ObservationBus.GetTracer().RandomID(),
+	}
+
 	ctx := new(context.Context).
-		SetRequestContext(context.NewRequestContext("rest", id, rest)).
-		SetEventContext(context.NewEventContext(nil, cfg4_.InitializeSnapshots()))
+		SetRequestContext(context.NewRequestContext("rest", id, rest).SetSpanMetadata(sm)).
+		SetEventContext(context.NewEventContext(nil, cfg4_.InitializeSnapshots())).
+		SetTracer(background.ObservationBus.GetTracer())
 	handler1(ctx, nil)
 	end := time.Now().UnixNano()
 

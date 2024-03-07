@@ -1,6 +1,10 @@
 package opentracing
 
-import "github.com/opentracing/opentracing-go/log"
+import (
+	"math/rand"
+
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/log"
+)
 
 // A NoopTracer is a trivial, minimum overhead implementation of Tracer
 // for which all operations are no-ops.
@@ -61,4 +65,13 @@ func (n NoopTracer) Inject(sp SpanContext, format interface{}, carrier interface
 // Extract belongs to the Tracer interface.
 func (n NoopTracer) Extract(format interface{}, carrier interface{}) (SpanContext, error) {
 	return nil, ErrSpanContextNotFound
+}
+
+// RandomID is managed by ContextBus
+func (n NoopTracer) RandomID() uint64 {
+	for {
+		if val := rand.Uint64(); val != 0 {
+			return val
+		}
+	}
 }

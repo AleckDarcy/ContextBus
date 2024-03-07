@@ -17,6 +17,6 @@ Package jaeger implements an OpenTracing (http://opentracing.io) Tracer.
 
 For integration instructions please refer to the README:
 
-https://github.com/uber/jaeger-client-go/blob/master/README.md
+https://github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/blob/master/README.md
 */
 package jaeger

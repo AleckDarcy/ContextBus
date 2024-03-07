@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/uber/jaeger-client-go/thrift"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/thrift"
 )
 
 // (needed to ensure safety because of naive import list construction.)

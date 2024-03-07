@@ -17,9 +17,9 @@ package jaeger
 import (
 	"fmt"
 
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/log"
 
-	j "github.com/uber/jaeger-client-go/thrift-gen/jaeger"
+	j "github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/thrift-gen/jaeger"
 )
 
 type tags []*j.Tag

@@ -1,21 +1,48 @@
 package observation
 
 import (
+	"github.com/AleckDarcy/ContextBus/context"
+	"github.com/AleckDarcy/ContextBus/helper"
+	cb "github.com/AleckDarcy/ContextBus/proto"
+
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
+
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/AleckDarcy/ContextBus/helper"
-	cb "github.com/AleckDarcy/ContextBus/proto"
 )
+
+// Prepare pre-allocate SpanID
+func (c *Configure) Prepare(ctx *context.Context, ed *cb.EventData) {
+	if c.Tracing == nil || c.Tracing.PrevName != "" {
+		return
+	}
+
+	sm := ctx.GetRequestContext().GetSpanMetadata() // parent span from caller
+	if sm == nil {
+		fmt.Println("request context: span metadata not found")
+		return
+	} else if !sm.Sampled {
+		return
+	}
+
+	ed.SpanMetadata = &cb.SpanMetadata{
+		Sampled:     true,
+		TraceIdHigh: sm.TraceIdHigh,
+		TraceIdLow:  sm.TraceIdLow,
+		SpanId:      ctx.GetTracer().RandomID(),
+		ParentId:    sm.SpanId,
+	}
+}
 
 // the Do function
 // finalize observation
 
 // Do function returns number of log, trace span and metric entries
-func (c *Configure) Do(ed *cb.EventData) (cntL, cntT, cntM int) {
+func (c *Configure) Do(ctx *context.Context, ed *cb.EventData) (cntL, cntT, cntM int) {
 	cntL = (*LoggingConfigure)(c.Logging).Do(ed)
-	cntT = (*TracingConfigure)(c.Tracing).Do(ed)
+	cntT = (*TracingConfigure)(c.Tracing).Do(ctx, ed)
 	cntM = len(c.Metrics)
 	for _, metric := range c.Metrics {
 		(*MetricsConfigure)(metric).Do(ed)
@@ -107,27 +134,43 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 	return 1
 }
 
-func (c *TracingConfigure) Do(ed *cb.EventData) int {
+func (c *TracingConfigure) Do(ctx *context.Context, ed *cb.EventData) int {
 	if c == nil {
+		return 0
+	} else if c.PrevName == "" { // skip
 		return 0
 	}
 
-	if prev := ed.GetPreviousEventData(c.PrevName); prev != nil {
-		tags := DoTag(c.Attrs, ed.Event)
-		if len(tags) != 0 {
-			fmt.Printf("todo tracing span(\"%s\", %s)=%d (from %s to %s)\n",
-				c.Name, tags, ed.Event.When.Time-prev.Event.When.Time, prev.Event.Recorder.Name, ed.Event.Recorder.Name)
-		} else {
-			fmt.Printf("todo tracing span(\"%s\")=%d (from %s to %s)\n",
-				c.Name, ed.Event.When.Time-prev.Event.When.Time, prev.Event.Recorder.Name, ed.Event.Recorder.Name)
-		}
-
-		return 1
+	prev := ed.GetPreviousEventData(c.PrevName)
+	if prev == nil {
+		fmt.Println("previous event not found", c.PrevName)
+		return 0
 	}
 
-	fmt.Println("previous event not found", c.PrevName)
+	sm := prev.SpanMetadata
+	if sm == nil {
+		fmt.Println("previous span metadata not found", c.PrevName)
+		return 0
+	}
 
-	return 0
+	tags := DoTraceTag(c.Attrs, ed.Event)
+	// todo: tags for testing
+	tags["method"] = "POST"
+	tags["key"] = "value"
+
+	sr := opentracing.SpanReference{
+		Type:              opentracing.ChildOfRef,
+		ReferencedContext: sm.ParentSpanContext(),
+	}
+
+	fmt.Println("sr", sr)
+
+	span := ctx.GetTracer().StartSpan("span", sr, opentracing.StartTime(time.Unix(0, prev.Event.When.Time)), opentracing.Tags(tags))
+	span.FinishWithOptions(opentracing.FinishOptions{FinishTime: time.Unix(0, ed.Event.When.Time)})
+
+	fmt.Printf("todo tracing span=%s (from %s to %s)\n", span.Context().(jaeger.SpanContext).ToString(), prev.Event.Recorder.Name, ed.Event.Recorder.Name)
+
+	return 1
 }
 
 func (c *MetricsConfigure) Do(ed *cb.EventData) int {
@@ -182,6 +225,20 @@ func (c *MetricsConfigure) Do(ed *cb.EventData) int {
 	}
 
 	return 1
+}
+
+func DoTraceTag(cfg []*cb.AttributeConfigure, er *cb.EventRepresentation) map[string]interface{} {
+	tags := map[string]interface{}{}
+
+	for _, path := range cfg {
+		str, err := er.What.GetValue(path.Path)
+
+		if err == nil {
+			tags[path.Name] = str
+		}
+	}
+
+	return tags
 }
 
 func DoTag(cfg []*cb.AttributeConfigure, er *cb.EventRepresentation) map[string]string {

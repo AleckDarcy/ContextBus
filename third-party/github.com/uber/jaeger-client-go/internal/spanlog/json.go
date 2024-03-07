@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/log"
 )
 
 type fieldsAsMap map[string]string

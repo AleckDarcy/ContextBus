@@ -14,7 +14,7 @@
 
 package jaeger
 
-import opentracing "github.com/opentracing/opentracing-go"
+import opentracing "github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 
 // Observer can be registered with the Tracer to receive notifications about
 // new Spans.

@@ -19,11 +19,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/uber/jaeger-lib/metrics"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/ext"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-lib/metrics"
 
-	jaeger "github.com/uber/jaeger-client-go"
+	jaeger "github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 )
 
 const defaultMaxNumberOfEndpoints = 200

@@ -15,7 +15,7 @@
 package jaeger
 
 import (
-	"github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 )
 
 // ZipkinSpanFormat is an OpenTracing carrier format constant

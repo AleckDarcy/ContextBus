@@ -15,9 +15,9 @@
 package jaeger
 
 import (
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go/log"
 
-	"github.com/uber/jaeger-client-go/internal/baggage"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/internal/baggage"
 )
 
 // baggageSetter is an actor that can set a baggage value on a Span given certain

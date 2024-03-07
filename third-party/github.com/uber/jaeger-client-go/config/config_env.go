@@ -22,9 +22,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 	"github.com/pkg/errors"
-	"github.com/uber/jaeger-client-go"
 )
 
 const (
