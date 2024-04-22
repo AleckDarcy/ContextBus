@@ -161,7 +161,7 @@ message TimestampConfigure {
 }
 
 message StackTraceConfigure {
-
+    bool switch = 1;
 }
 
 enum LogOutType {
@@ -183,6 +183,7 @@ message TracingConfigure {
     string name                       = 1;
     string prev_name                  = 2; // event pair
     repeated AttributeConfigure attrs = 3;
+    StackTraceConfigure stacktrace    = 4;
 
     string parent_name = 11; // span name
 }
