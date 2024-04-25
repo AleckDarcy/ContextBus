@@ -4,7 +4,6 @@ import (
 	"github.com/AleckDarcy/ContextBus/context"
 	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
-
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 
@@ -13,10 +12,15 @@ import (
 	"time"
 )
 
-// Prepare pre-allocate SpanID
+// Prepare pre-allocates SpanID and get stacktrace
 func (c *Configure) Prepare(ctx *context.Context, ed *cb.EventData) {
 	if c.Tracing == nil || c.Tracing.PrevName != "" {
 		return
+	}
+
+	if c.IsStacktrace(ctx) {
+		// todo get stacktrace
+
 	}
 
 	sm := ctx.GetRequestContext().GetSpanMetadata() // parent span from caller
@@ -34,6 +38,41 @@ func (c *Configure) Prepare(ctx *context.Context, ed *cb.EventData) {
 		SpanId:      ctx.GetTracer().RandomID(),
 		ParentId:    sm.SpanId,
 	}
+}
+
+// IsStacktrace returns true if any observation configuration needs stacktrace
+func (c *Configure) IsStacktrace(ctx *context.Context) bool {
+	if (*LoggingConfigure)(c.Logging).IsStacktrace(ctx) {
+		return true
+	} else if (*TracingConfigure)(c.Tracing).IsStacktrace(ctx) {
+		return true
+	}
+
+	return false
+}
+
+func (c *StackTraceConfigure) IsStacktrace(ctx *context.Context) bool {
+	if c == nil {
+		return false
+	}
+
+	return c.Switch
+}
+
+func (c *LoggingConfigure) IsStacktrace(ctx *context.Context) bool {
+	if c == nil {
+		return false
+	}
+
+	return (*StackTraceConfigure)(c.Stacktrace).IsStacktrace(ctx)
+}
+
+func (c *TracingConfigure) IsStacktrace(ctx *context.Context) bool {
+	if c == nil {
+		return false
+	}
+
+	return (*StackTraceConfigure)(c.Stacktrace).IsStacktrace(ctx)
 }
 
 // the Do function

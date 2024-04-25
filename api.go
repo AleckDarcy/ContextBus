@@ -1,15 +1,40 @@
 package ContextBus
 
 import (
+	"fmt"
 	"github.com/AleckDarcy/ContextBus/background"
 	"github.com/AleckDarcy/ContextBus/configure"
 	"github.com/AleckDarcy/ContextBus/configure/reaction"
 	"github.com/AleckDarcy/ContextBus/context"
 	cb "github.com/AleckDarcy/ContextBus/proto"
-
-	"fmt"
+	"os"
 	"time"
 )
+
+var HOSTNAME = os.Getenv("HOSTNAME")
+var GOLANG_VERSION = os.Getenv("GOLANG_VERSION")
+
+type signal struct {
+	environmentalProfile chan struct{}
+}
+
+func init() {
+	if len(HOSTNAME) == 0 {
+		fmt.Println("lookup HOSTNAME from env fail")
+		return
+	} else if len(GOLANG_VERSION) == 0 {
+		fmt.Println("lookup GOLANG_VERSION from env fail")
+		return
+	}
+
+	sig := &signal{
+		environmentalProfile: make(chan struct{}),
+	}
+
+	go background.EnvironmentProfiler.Run(sig.environmentalProfile)
+
+	fmt.Printf("Initialize ContextBus(HOSTNAME=%s, GOLANG_VERSION=%s)\n", HOSTNAME, GOLANG_VERSION)
+}
 
 // OnSubmission user interface
 func OnSubmission(ctx *context.Context, where *cb.EventWhere, who *cb.EventRecorder, app *cb.EventMessage) {

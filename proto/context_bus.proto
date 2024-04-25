@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package context_bus;
 
-option go_package = "github.com/AleckDarcy/reload/core/context_bus/proto";
+option go_package = "proto";
 
 enum ConditionOperator {
     ConditionOperator_ = 0;

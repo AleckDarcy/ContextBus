@@ -1,6 +1,9 @@
 package observation
 
 import (
+	"runtime/debug"
+
+	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 
 	"testing"
@@ -31,4 +34,21 @@ func BenchmarkName(b *testing.B) {
 		//b.Log((*LoggingConfigure)(cfg).Do(&cb.EventData{Event: er}))
 		(*LoggingConfigure)(cfg).Do(&cb.EventData{Event: er})
 	}
+}
+
+func BenchmarkStackTrace(b *testing.B) {
+	a := ""
+	fb := func() {
+		a = helper.BytesToString(debug.Stack())
+		//a = string(debug.Stack())
+	}
+	fa := func() {
+		fb()
+	}
+
+	for i := 0; i < b.N; i++ {
+		fa()
+	}
+
+	_ = a
 }
