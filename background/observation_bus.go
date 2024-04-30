@@ -69,7 +69,7 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 		}
 
 		pay := v.(*EventDataPayload)
-		if cfg := configure.ConfigureStore.GetConfigure(pay.ctx.GetRequestContext().GetConfigureID()); cfg != nil {
+		if cfg := configure.Store.GetConfigure(pay.ctx.GetRequestContext().GetConfigureID()); cfg != nil {
 			if obs := cfg.GetObservationConfigure(pay.ed.Event.Recorder.Name); obs != nil {
 				cntL_, cntT_, cntM_ := obs.Do(pay.ctx, pay.ed)
 				cntL += cntL_

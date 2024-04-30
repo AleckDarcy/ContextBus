@@ -387,8 +387,8 @@ func TestObservation(t *testing.T) {
 	}
 
 	id := int64(4)
-	configure.ConfigureStore.SetConfigure(id, cfg4)
-	cfg4_ := configure.ConfigureStore.GetConfigure(id)
+	configure.Store.SetConfigure(id, cfg4)
+	cfg4_ := configure.Store.GetConfigure(id)
 
 	handler2 := func(ctx *context.Context, req *request) (rsp *response, err error) {
 		t.Log("handler2 invoked")
@@ -418,7 +418,7 @@ func TestObservation(t *testing.T) {
 		// handler2 framework inbound
 		req := <-requestNetwork
 		id := req.cbPayload.ConfigId
-		cfg := configure.ConfigureStore.GetConfigure(id)
+		cfg := configure.Store.GetConfigure(id)
 		ctx1 := new(context.Context).
 			SetRequestContext(context.NewRequestContext("rest", id, rest2).SetSpanMetadata(sm)).
 			SetEventContext(new(context.EventContext).SetPrerequisiteSnapshots(req.cbPayload.Snapshots).SetOffsetSnapshots(cfg.InitializeSnapshots())).

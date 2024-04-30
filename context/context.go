@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+const CB_CONTEXT_NAME = "context_bus"
+
 // RequestContext is inter-service message context
 type RequestContext struct {
 	lib         string // name of network API

@@ -1,12 +1,13 @@
 package ContextBus
 
 import (
-	"fmt"
 	"github.com/AleckDarcy/ContextBus/background"
 	"github.com/AleckDarcy/ContextBus/configure"
 	"github.com/AleckDarcy/ContextBus/configure/reaction"
 	"github.com/AleckDarcy/ContextBus/context"
 	cb "github.com/AleckDarcy/ContextBus/proto"
+
+	"fmt"
 	"os"
 	"time"
 )
@@ -67,7 +68,7 @@ func OnSubmission(ctx *context.Context, where *cb.EventWhere, who *cb.EventRecor
 		Metadata: md,
 	}
 
-	cfg := configure.ConfigureStore.GetConfigure(reqCtx.GetConfigureID())
+	cfg := configure.Store.GetConfigure(reqCtx.GetConfigureID())
 	snapshots := cfg.UpdateSnapshots(who.GetName(), eveCtx.GetPrerequisiteSnapshots())
 	offset := eveCtx.GetOffsetSnapshots()
 	if offset != nil {

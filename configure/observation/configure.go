@@ -19,6 +19,7 @@ func (c *Configure) Prepare(ctx *context.Context, ed *cb.EventData) {
 	}
 
 	if c.IsStacktrace(ctx) {
+
 		// todo get stacktrace
 
 	}

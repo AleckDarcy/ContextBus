@@ -53,7 +53,7 @@ func TestObservationBus_Observation(t *testing.T) {
 	go background.ObservationBus.Run(nil)
 
 	id := int64(2)
-	configure.ConfigureStore.SetConfigure(id, cfg2)
+	configure.Store.SetConfigure(id, cfg2)
 
 	ctx := context.NewContext(context.NewRequestContext("rest", id, rest), context.NewEventContext(nil, nil))
 	app := new(cb.EventMessage).SetMessage("received message from %s").SetPaths([]*cb.Path{path})
@@ -83,9 +83,9 @@ func TestObservationBus_Reaction(t *testing.T) {
 	go background.ObservationBus.Run(nil)
 
 	id := int64(3)
-	configure.ConfigureStore.SetConfigure(id, cfg3)
+	configure.Store.SetConfigure(id, cfg3)
 
-	cfg := configure.ConfigureStore.GetConfigure(id)
+	cfg := configure.Store.GetConfigure(id)
 	t.Log(cfg.ReactionIndex)
 
 	ss := cfg.InitializeSnapshots()

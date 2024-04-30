@@ -3,23 +3,37 @@ package configure
 import (
 	"github.com/AleckDarcy/ContextBus/configure/observation"
 	"github.com/AleckDarcy/ContextBus/configure/reaction"
+	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 
 	"sync"
+	"sync/atomic"
+	"unsafe"
 )
 
-type configureStore struct {
-	lock       sync.RWMutex
-	configures map[int64]*Configure // int64: configure_id
+type store struct {
+	lock sync.RWMutex
+
+	defaultConfigure *Configure
+	configures       map[int64]*Configure // int64: configure_id
 }
 
-var ConfigureStore = configureStore{configures: map[int64]*Configure{}}
+var Store = store{configures: map[int64]*Configure{}}
 
-func (s *configureStore) SetConfigure(id int64, configure *cb.Configure) {
+// DefaultObservation converts event data to a single log entry
+var DefaultObservation = &cb.ObservationConfigure{
+	Type: cb.ObservationType_ObservationSingle,
+	Logging: &cb.LoggingConfigure{
+		Timestamp: &cb.TimestampConfigure{Format: helper.TIME_FORMAT_DEFAULT},
+		Out:       cb.LogOutType_Stdout,
+	},
+}
+
+func (s *store) convertConfigure(cfg *cb.Configure) *Configure {
 	racs := map[string]*reaction.Configure(nil)
 	racMapMap := map[string]map[string]*reaction.Configure{} // <event (observation), <event (reaction), cfg>>
 
-	if reactions := configure.Reactions; reactions != nil {
+	if reactions := cfg.Reactions; reactions != nil {
 		racs = make(map[string]*reaction.Configure, len(reactions))
 		for name, reaction_ := range reactions {
 			rac := &reaction.Configure{
@@ -53,18 +67,32 @@ func (s *configureStore) SetConfigure(id int64, configure *cb.Configure) {
 		racIndex[name] = racList
 	}
 
-	cfg := &Configure{
+	return &Configure{
 		Reactions:     racs,
-		Observations:  configure.Observations,
+		Observations:  cfg.Observations,
 		ReactionIndex: racIndex,
 	}
+}
+
+func (s *store) SetDefault(configure *cb.Configure) {
+	cfg := s.convertConfigure(configure)
+
+	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&s.defaultConfigure)), unsafe.Pointer(cfg))
+}
+
+func (s *store) GetDefault() *cb.Configure {
+	return (*cb.Configure)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.defaultConfigure))))
+}
+
+func (s *store) SetConfigure(id int64, configure *cb.Configure) {
+	cfg := s.convertConfigure(configure)
 
 	s.lock.Lock()
 	s.configures[id] = cfg
 	s.lock.Unlock()
 }
 
-func (s *configureStore) GetConfigure(id int64) *Configure {
+func (s *store) GetConfigure(id int64) *Configure {
 	s.lock.RLock()
 	cfg := s.configures[id]
 	s.lock.RUnlock()
@@ -112,7 +140,7 @@ func (c *Configure) UpdateBothSnapshots(name string, ss, offset *cb.Prerequisite
 
 func (c *Configure) GetObservationConfigure(name string) *observation.Configure {
 	if c.Observations == nil {
-		return nil
+		return (*observation.Configure)(DefaultObservation)
 	}
 
 	return (*observation.Configure)(c.Observations[name])
