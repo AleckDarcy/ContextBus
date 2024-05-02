@@ -20,6 +20,9 @@ type store struct {
 
 var Store = store{configures: map[int64]*Configure{}}
 
+const CBCID_BYPASS = int64(-1)
+const CBCID_DEFAULT = int64(0)
+
 // DefaultObservation converts event data to a single log entry
 var DefaultObservation = &cb.ObservationConfigure{
 	Type: cb.ObservationType_ObservationSingle,
@@ -74,6 +77,8 @@ func (s *store) convertConfigure(cfg *cb.Configure) *Configure {
 	}
 }
 
+// SetDefault Configure
+// atomic supports real-time updates
 func (s *store) SetDefault(configure *cb.Configure) {
 	cfg := s.convertConfigure(configure)
 

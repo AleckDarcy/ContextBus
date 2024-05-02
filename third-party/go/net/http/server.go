@@ -18,16 +18,20 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AleckDarcy/ContextBus/configure"
 	cb_context "github.com/AleckDarcy/ContextBus/context"
+	cb "github.com/AleckDarcy/ContextBus/proto"
 )
 
 // on to turn on context bus. default: false
 var on bool
 
 func TurnOn() {
-	new(sync.Once).Do(func() {
-		on = true
-	})
+	on = true
+}
+
+func TurnOff() {
+	on = false
 }
 
 // The HandlerFunc type is an adapter to allow the use of
@@ -45,23 +49,27 @@ func NewHandlerFunc(f http.HandlerFunc) http.Handler {
 // ServeHTTP calls f(w, r).
 func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if on {
-		cfgID := int64(0)
-		// get context bus configure id
+		// get ContextBus Configure ID (cbcID)
 		if cfgIDStr := r.URL.Query().Get("cbcID"); cfgIDStr != "" {
 			if cfgIDInt, err := strconv.Atoi(cfgIDStr); err == nil {
-				fmt.Printf("context bus reloaded ServeHTTP called, cfgID: %s\n", cfgIDInt)
+				fmt.Printf("ContextBus ServeHTTP called, cfgID: %d\n", cfgIDInt)
+				cfgID := int64(cfgIDInt)
+				if cfgID == configure.CBCID_BYPASS {
+					fmt.Println("ContextBus ServeHTTP bypassed, cfgID == CBCID_BYPASS")
+				} else {
+					reqCtx := cb_context.NewRequestContext("", cfgID, nil)
+					eveCtx := cb_context.NewEventContext(nil, &cb.PrerequisiteSnapshots{})
+					ctx := context.WithValue(r.Context(), cb_context.CB_CONTEXT_NAME, cb_context.NewContext(reqCtx, eveCtx))
+					r = r.WithContext(ctx)
+				}
 			} else {
-				fmt.Printf("context bus reloaded ServeHTTP called, using default cfgID, err: %v\n", err)
+				fmt.Printf("ContextBus ServeHTTP bypassed, err: %v\n", err)
 			}
 		} else {
-			fmt.Printf("context bus reloaded ServeHTTP called, parameter missing, using default cfgID")
+			fmt.Println("ContextBus ServeHTTP bypassed, parameter missing")
 		}
-
-		reqCtx := cb_context.NewRequestContext("", cfgID, nil)
-		ctx := context.WithValue(r.Context(), cb_context.CB_CONTEXT_NAME, cb_context.NewContext(reqCtx, nil))
-		r = r.WithContext(ctx)
 	} else {
-		fmt.Println("context bus reloaded ServeHTTP bypassed")
+		fmt.Println("ContextBus ServeHTTP bypassed")
 	}
 
 	f.f(w, r)

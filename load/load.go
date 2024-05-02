@@ -61,6 +61,7 @@ type taskSetting struct {
 	total  int
 	thread int
 	speed  int
+	cbcID  int
 }
 
 type result struct {
@@ -73,11 +74,11 @@ func getUser() *user {
 	return users[rand.Int()%500]
 }
 
-func searchHotelParaGen(random bool, total int) *params {
+func searchHotelParaGen(random bool, total, cbcID int) *params {
 	if !random {
 		return &params{
 			size:   1,
-			params: []*param{{method: http.MethodGet, path: URL + "/hotels?inDate=2015-04-09&outDate=2015-04-10&lat=37.7749&lon=-122.4194"}},
+			params: []*param{{method: http.MethodGet, path: URL + fmt.Sprintf("/hotels?cbcID=%d&inDate=2015-04-09&outDate=2015-04-10&lat=37.7749&lon=-122.4194", cbcID)}},
 		}
 	}
 
@@ -103,7 +104,7 @@ func searchHotelParaGen(random bool, total int) *params {
 	return params
 }
 
-func recommendParaGen(random bool, total int) *params {
+func recommendParaGen(random bool, total, cbcID int) *params {
 	if !random {
 
 	}
@@ -137,7 +138,7 @@ func recommendParaGen(random bool, total int) *params {
 	return params
 }
 
-func reserveParaGen(random bool, total int) *params {
+func reserveParaGen(random bool, total, cbcID int) *params {
 	params := &params{
 		size:   total,
 		params: make([]*param, total),
@@ -271,13 +272,13 @@ func worker(paras *params, random bool, total, threads, speed int) {
 	fmt.Println(random, total, threads, speed, time.Duration(latency), int(float64(total)/(float64(end-start)/float64(time.Second.Nanoseconds()))), errCount)
 }
 
-type api func(random bool, total, threads, speed int)
+type api func(random bool, total, threads, speed, cbcID int)
 
 func run(a api, tasks []*taskSetting) {
 	sleep := 5 * time.Second
 
 	for i, task := range tasks {
-		a(false, task.total, task.thread, task.speed)
+		a(false, task.total, task.thread, task.speed, task.cbcID)
 
 		if i != len(tasks)-1 {
 			time.Sleep(sleep)
@@ -285,8 +286,8 @@ func run(a api, tasks []*taskSetting) {
 	}
 }
 
-func searchHotel(random bool, total, threads, speed int) {
-	paras := searchHotelParaGen(random, total)
+func searchHotel(random bool, total, threads, speed, cbcID int) {
+	paras := searchHotelParaGen(random, total, cbcID)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)
@@ -295,8 +296,8 @@ func searchHotel(random bool, total, threads, speed int) {
 	worker(paras, random, total, threads, speed)
 }
 
-func recommend(random bool, total, threads, speed int) {
-	paras := recommendParaGen(random, total)
+func recommend(random bool, total, threads, speed int, cbcID int) {
+	paras := recommendParaGen(random, total, cbcID)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)
@@ -305,8 +306,8 @@ func recommend(random bool, total, threads, speed int) {
 	worker(paras, random, total, threads, speed)
 }
 
-func reserve(random bool, total, threads, speed int) {
-	paras := reserveParaGen(random, total)
+func reserve(random bool, total, threads, speed int, cbcID int) {
+	paras := reserveParaGen(random, total, cbcID)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)

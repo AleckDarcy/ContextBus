@@ -6,6 +6,7 @@ import (
 	cb "github.com/AleckDarcy/ContextBus/proto"
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
+	"github.com/rs/zerolog"
 
 	"fmt"
 	"os"
@@ -115,6 +116,9 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 	e := newEvent()
 	e.buf = helper.JSONEncoder.BeginObject(e.buf)
 
+	e.buf = helper.JSONEncoder.AppendKey(e.buf, "caller")
+	e.buf = helper.JSONEncoder.AppendString(e.buf, "test/caller.go")
+
 	e.buf = helper.JSONEncoder.AppendKey(e.buf, "level")
 	e.buf = helper.JSONEncoder.AppendString(e.buf, "info")
 
@@ -162,7 +166,7 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 	case cb.LogOutType_LogOutType_:
 		// omit print
 	case cb.LogOutType_Stdout:
-		fmt.Fprintln(os.Stdout, str)
+		fmt.Fprintln(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}, str)
 	case cb.LogOutType_Stderr:
 		fmt.Fprintln(os.Stderr, str)
 	case cb.LogOutType_File:
