@@ -121,6 +121,24 @@ func NewContext(reqCtx *RequestContext, eveCtx *EventContext) *Context {
 	}
 }
 
+// Payload generates Payload for grpc messages
+// todo: fields
+func (c *Context) Payload() *cb.Payload {
+	if c == nil {
+		return nil
+	}
+
+	return &cb.Payload{
+		RequestId: 0,
+		ConfigId:  c.reqCtx.configureID,
+		Snapshots: c.eveCtx.snapshots,
+		Addition:  nil,
+		Parent:    nil,
+		MType:     cb.MessageType_Message_Request,
+		Uuid:      "",
+	}
+}
+
 func (c *Context) GetRequestContext() *RequestContext {
 	return c.reqCtx
 }
