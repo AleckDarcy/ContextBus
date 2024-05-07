@@ -18,6 +18,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AleckDarcy/ContextBus/background"
+
 	"github.com/AleckDarcy/ContextBus/configure"
 	cb_context "github.com/AleckDarcy/ContextBus/context"
 	cb "github.com/AleckDarcy/ContextBus/proto"
@@ -52,15 +54,27 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// get ContextBus Configure ID (cbcID)
 		if cfgIDStr := r.URL.Query().Get("cbcID"); cfgIDStr != "" {
 			if cfgIDInt, err := strconv.Atoi(cfgIDStr); err == nil {
-				fmt.Printf("ContextBus ServeHTTP called, cfgID: %d\n", cfgIDInt)
 				cfgID := int64(cfgIDInt)
 				if cfgID == configure.CBCID_BYPASS {
 					fmt.Println("ContextBus ServeHTTP bypassed, cfgID == CBCID_BYPASS")
 				} else {
+					tracer := background.ObservationBus.GetTracer()
 					reqCtx := cb_context.NewRequestContext("", cfgID, nil)
 					eveCtx := cb_context.NewEventContext(nil, &cb.PrerequisiteSnapshots{})
-					ctx := context.WithValue(r.Context(), cb_context.CB_CONTEXT_NAME, cb_context.NewContext(reqCtx, eveCtx))
+					cbCtx := cb_context.NewContext(reqCtx, eveCtx).SetTracer(tracer)
+
+					// todo: fake span metadata of caller
+					reqCtx.SetSpanMetadata(&cb.SpanMetadata{
+						Sampled:     true,
+						TraceIdHigh: cbCtx.GetTracer().RandomID(),
+						TraceIdLow:  cbCtx.GetTracer().RandomID(),
+						SpanId:      cbCtx.GetTracer().RandomID(),
+					})
+
+					ctx := context.WithValue(r.Context(), cb_context.CB_CONTEXT_NAME, cbCtx)
 					r = r.WithContext(ctx)
+
+					fmt.Printf("ContextBus ServeHTTP set ContextBus context: %+v\n", cbCtx)
 				}
 			} else {
 				fmt.Printf("ContextBus ServeHTTP bypassed, err: %v\n", err)

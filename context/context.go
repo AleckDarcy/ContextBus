@@ -133,7 +133,7 @@ func (c *Context) Payload() *cb.Payload {
 		ConfigId:  c.reqCtx.configureID,
 		Snapshots: c.eveCtx.snapshots,
 		Addition:  nil,
-		Parent:    nil,
+		Parent:    c.span,
 		MType:     cb.MessageType_Message_Request,
 		Uuid:      "",
 	}
@@ -180,4 +180,14 @@ func (c *Context) SetTracer(tracer opentracing.Tracer) *Context {
 
 func (c *Context) GetTracer() opentracing.Tracer {
 	return c.tracer
+}
+
+func (c *Context) SetSpanMetadata(sm *cb.SpanMetadata) *Context {
+	c.span = sm
+
+	return c
+}
+
+func (c *Context) GetSpanMetadata() *cb.SpanMetadata {
+	return c.span
 }

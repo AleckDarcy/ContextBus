@@ -23,13 +23,17 @@ var Store = store{configures: map[int64]*Configure{}}
 const CBCID_BYPASS = int64(-1)
 const CBCID_DEFAULT = int64(0)
 
+// DefaultJSONLogging prints Message to Stdout
+// todo Logging Type: JSON, text, xml, etc...
+var DefaultJSONLogging = &cb.LoggingConfigure{
+	Timestamp: &cb.TimestampConfigure{Format: helper.TIME_FORMAT_DEFAULT},
+	Out:       cb.LogOutType_Stdout,
+}
+
 // DefaultObservation converts event data to a single log entry
 var DefaultObservation = &cb.ObservationConfigure{
-	Type: cb.ObservationType_ObservationSingle,
-	Logging: &cb.LoggingConfigure{
-		Timestamp: &cb.TimestampConfigure{Format: helper.TIME_FORMAT_DEFAULT},
-		Out:       cb.LogOutType_Stdout,
-	},
+	Type:    cb.ObservationType_ObservationSingle,
+	Logging: DefaultJSONLogging,
 }
 
 func (s *store) convertConfigure(cfg *cb.Configure) *Configure {
@@ -85,8 +89,8 @@ func (s *store) SetDefault(configure *cb.Configure) {
 	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&s.defaultConfigure)), unsafe.Pointer(cfg))
 }
 
-func (s *store) GetDefault() *cb.Configure {
-	return (*cb.Configure)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.defaultConfigure))))
+func (s *store) GetDefault() *Configure {
+	return (*Configure)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.defaultConfigure))))
 }
 
 func (s *store) SetConfigure(id int64, configure *cb.Configure) {
@@ -107,7 +111,7 @@ func (s *store) GetConfigure(id int64) *Configure {
 	}
 
 	// return default Configure
-	return &Configure{}
+	return s.GetDefault()
 }
 
 func (c *Configure) InitializeSnapshots() *cb.PrerequisiteSnapshots {
@@ -148,7 +152,12 @@ func (c *Configure) GetObservationConfigure(name string) *observation.Configure 
 		return (*observation.Configure)(DefaultObservation)
 	}
 
-	return (*observation.Configure)(c.Observations[name])
+	cfg := (*observation.Configure)(c.Observations[name])
+	if cfg == nil {
+		return (*observation.Configure)(DefaultObservation)
+	}
+
+	return cfg
 }
 
 func (c *Configure) GetReaction(name string) *reaction.Configure {

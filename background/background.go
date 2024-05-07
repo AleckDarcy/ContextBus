@@ -6,6 +6,8 @@ package background
 // Initialized during deployment.
 
 type Configure struct {
+	ServiceName         string
+	JaegerHost          string
 	EnvironmentProfiler bool
 	ObservationBus      bool
 }
@@ -34,7 +36,7 @@ func Run(cfg_ *Configure) {
 	}
 
 	if cfg.ObservationBus {
-		go ObservationBus.Run(sig.observationBus)
+		go ObservationBus.Run(cfg_.ServiceName, cfg_.JaegerHost, sig.observationBus)
 	}
 }
 

@@ -15,31 +15,37 @@ import (
 
 // Prepare pre-allocates SpanID and get stacktrace
 func (c *Configure) Prepare(ctx *context.Context, ed *cb.EventData) {
-	if c.Tracing == nil || c.Tracing.PrevName != "" {
+	if c.Tracing == nil { // no tracing required
+		return
+	} else if c.Tracing.PrevName != "" { //
 		return
 	}
 
-	if c.IsStacktrace(ctx) {
-
+	if c.IsStacktrace(ctx) { // capture stacktrace
 		// todo get stacktrace
-
 	}
 
-	sm := ctx.GetRequestContext().GetSpanMetadata() // parent span from caller
-	if sm == nil {
-		fmt.Println("request context: span metadata not found")
+	fmt.Printf("request context: %+v\n", ctx.GetRequestContext())
+	reqSM := ctx.GetRequestContext().GetSpanMetadata() // parent span from caller
+	if reqSM == nil {
+		fmt.Println("request span metadata not found")
 		return
-	} else if !sm.Sampled {
+	} else if !reqSM.Sampled {
+		fmt.Println("request not sampled")
 		return
 	}
 
-	ed.SpanMetadata = &cb.SpanMetadata{
+	fmt.Println("set span metadata")
+	sm := &cb.SpanMetadata{
 		Sampled:     true,
-		TraceIdHigh: sm.TraceIdHigh,
-		TraceIdLow:  sm.TraceIdLow,
+		TraceIdHigh: reqSM.TraceIdHigh,
+		TraceIdLow:  reqSM.TraceIdLow,
 		SpanId:      ctx.GetTracer().RandomID(),
-		ParentId:    sm.SpanId,
+		ParentId:    reqSM.SpanId,
 	}
+
+	ed.SpanMetadata = sm
+	ctx.SetSpanMetadata(sm)
 }
 
 // IsStacktrace returns true if any observation configuration needs stacktrace
@@ -207,7 +213,7 @@ func (c *TracingConfigure) Do(ctx *context.Context, ed *cb.EventData) int {
 		ReferencedContext: sm.ParentSpanContext(),
 	}
 
-	fmt.Println("sr", sr)
+	fmt.Println("span reference", sr)
 
 	span := ctx.GetTracer().StartSpan("span", sr, opentracing.SpanID(sm.SpanId), opentracing.StartTime(time.Unix(0, prev.Event.When.Time)), opentracing.Tags(tags))
 	span.FinishWithOptions(opentracing.FinishOptions{FinishTime: time.Unix(0, ed.Event.When.Time)})

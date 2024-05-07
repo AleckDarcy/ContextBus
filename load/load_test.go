@@ -11,17 +11,17 @@ func TestSearchHotel(t *testing.T) {
 	total := 8192
 	speed := 2400
 	speedC := 6000 // constant speed
-	cbcID := int(configure.CBCID_DEFAULT)
+	cbcID := int(configure.CBCID_BYPASS)
 
 	tasks := []*taskSetting{
 		{total: total, thread: 128, speed: speed, cbcID: cbcID},
-		{total: total, thread: 64, speed: speed, cbcID: cbcID},
+		//{total: total, thread: 64, speed: speed, cbcID: cbcID},
 		//{total: total, thread: 32, speed: speed, cbcID: cbcID},
 		//{total: total, thread: 16, speed: speed, cbcID: cbcID},
-		{total: total, thread: 8, speed: speed, cbcID: cbcID},
+		//{total: total, thread: 8, speed: speed, cbcID: cbcID},
 		//{total: total, thread: 4, speed: speed / 2, cbcID: cbcID},
-		{total: total, thread: 2, speed: speed / 4, cbcID: cbcID},
-		{total: total, thread: 1, speed: speed / 8, cbcID: cbcID},
+		//{total: total, thread: 2, speed: speed / 4, cbcID: cbcID},
+		//{total: total, thread: 1, speed: speed / 8, cbcID: cbcID},
 
 		//// constant speed
 		//{total: total, thread: 128, speed: speedC},

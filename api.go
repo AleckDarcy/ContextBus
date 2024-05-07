@@ -17,7 +17,7 @@ import (
 var HOSTNAME = os.Getenv("HOSTNAME")
 var GOLANG_VERSION = os.Getenv("GOLANG_VERSION")
 
-func TurnOn() {
+func TurnOn(serviceName, jaegerHost string) {
 	// read env
 	if len(HOSTNAME) == 0 {
 		fmt.Println("lookup HOSTNAME from env fail")
@@ -30,6 +30,8 @@ func TurnOn() {
 
 	// run background tasks
 	background.Run(&background.Configure{
+		ServiceName:         serviceName,
+		JaegerHost:          jaegerHost,
 		EnvironmentProfiler: true,
 		ObservationBus:      true,
 	})
@@ -46,14 +48,36 @@ func TurnOff() {
 	cb_http.TurnOff()
 }
 
-// Preparation reads http.Request context.
-// returns Context Bus context
-func Preparation(ctx context.Context) (*cb_context.Context, bool) {
+// FromHTTP reads Context from the http.Request.
+// returns ContextBus context
+func FromHTTP(ctx context.Context) (*cb_context.Context, bool) {
 	if cbCtxItf := ctx.Value(cb_context.CB_CONTEXT_NAME); cbCtxItf != nil {
+		fmt.Printf("retrieved ContextBus context from HTTP: %+v\n", cbCtxItf)
+
 		return cbCtxItf.(*cb_context.Context), true
 	}
 
 	return nil, false
+}
+
+// FromPayload reads Context from the proto message.
+// returns Context Bus context
+func FromPayload(ctx context.Context, pay *cb.Payload) (*cb_context.Context, bool) {
+	if pay == nil {
+		return nil, false
+	} else if pay.ConfigId == configure.CBCID_BYPASS {
+		return nil, false
+	}
+
+	// todo
+	reqCtx := cb_context.NewRequestContext("", pay.ConfigId, nil).SetSpanMetadata(pay.Parent)
+	eveCtx := cb_context.NewEventContext(nil, &cb.PrerequisiteSnapshots{})
+
+	cbCtx := cb_context.NewContext(reqCtx, eveCtx).SetTracer(background.ObservationBus.GetTracer())
+
+	fmt.Printf("retrieved ContextBus context from Payload: %+v\n", cbCtx)
+
+	return cbCtx, true
 }
 
 // OnSubmission user interface
@@ -95,14 +119,16 @@ func OnSubmission(ctx *cb_context.Context, where *cb.EventWhere, who *cb.EventRe
 	}
 
 	if obs := cfg.GetObservationConfigure(who.GetName()); obs != nil {
+		fmt.Printf("found observation configure for %s\n", who.GetName())
+
 		// todo check stacktrace configure
 		// update EventMetadata
 		switch obs.Type {
 		case cb.ObservationType_ObservationSingle:
-			// by pass PrevEvent
+			// bypass PrevEvent
 
 		case cb.ObservationType_ObservationStart:
-			// initialize event pair
+			// initialize event chain
 			newEveCtx := new(cb_context.EventContext).SetPrerequisiteSnapshots(snapshots).SetOffsetSnapshots(offset).SetPrevEvent(eveCtx, ed)
 			ctx.SetEventContext(newEveCtx)
 		case cb.ObservationType_ObservationInter:
@@ -110,7 +136,7 @@ func OnSubmission(ctx *cb_context.Context, where *cb.EventWhere, who *cb.EventRe
 			ctx.SetEventContext(newEveCtx)
 			fallthrough
 		case cb.ObservationType_ObservationEnd:
-			// finalize event pair
+			// finalize event chain
 			_, prevED := eveCtx.GetPrevEvent()
 			if prevED == nil {
 				fmt.Errorf("eveCtx.GetPrevEvent() get nil")
