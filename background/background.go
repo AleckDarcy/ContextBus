@@ -1,18 +1,13 @@
 package background
 
+import "github.com/AleckDarcy/ContextBus/configure"
+
 // List of background tasks:
 // 1. environmental profiling
 // 2. (?) configuration
 // Initialized during deployment.
 
-type Configure struct {
-	ServiceName         string
-	JaegerHost          string
-	EnvironmentProfiler bool
-	ObservationBus      bool
-}
-
-var cfg *Configure
+var cfg *configure.ServerConfigure
 
 type signal struct {
 	environmentProfiler chan struct{}
@@ -24,9 +19,9 @@ var sig = signal{
 	observationBus:      make(chan struct{}, 1),
 }
 
-func Run(cfg_ *Configure) {
+func Run(cfg_ *configure.ServerConfigure) {
 	if cfg = cfg_; cfg == nil {
-		cfg = &Configure{}
+		cfg = &configure.ServerConfigure{}
 
 		return
 	}
@@ -36,7 +31,7 @@ func Run(cfg_ *Configure) {
 	}
 
 	if cfg.ObservationBus {
-		go ObservationBus.Run(cfg_.ServiceName, cfg_.JaegerHost, sig.observationBus)
+		go ObservationBus.Run(cfg, sig.observationBus)
 	}
 }
 

@@ -215,7 +215,7 @@ func (c *TracingConfigure) Do(ctx *context.Context, ed *cb.EventData) int {
 
 	fmt.Println("span reference", sr)
 
-	span := ctx.GetTracer().StartSpan("span", sr, opentracing.SpanID(sm.SpanId), opentracing.StartTime(time.Unix(0, prev.Event.When.Time)), opentracing.Tags(tags))
+	span := ctx.GetTracer().StartSpan(c.Name, sr, opentracing.SpanID(sm.SpanId), opentracing.StartTime(time.Unix(0, prev.Event.When.Time)), opentracing.Tags(tags))
 	span.FinishWithOptions(opentracing.FinishOptions{FinishTime: time.Unix(0, ed.Event.When.Time)})
 
 	fmt.Printf("todo tracing span=%s (from %s to %s)\n", span.Context().(jaeger.SpanContext).ToString(), prev.Event.Recorder.Name, ed.Event.Recorder.Name)

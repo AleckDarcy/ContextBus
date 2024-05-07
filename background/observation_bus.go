@@ -7,10 +7,10 @@ import (
 	"github.com/AleckDarcy/ContextBus/context"
 	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
-	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 
 	// third-party
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
+	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go/config"
 
 	"fmt"
@@ -87,16 +87,16 @@ type observationCounter struct {
 	payload int
 }
 
-func (b *observationBus) Run(serviceName, jaegerHost string, sig chan struct{}) {
+func (b *observationBus) Run(cfg *configure.ServerConfigure, sig chan struct{}) {
 	var tracerCfg = &config.Configuration{
-		ServiceName: serviceName,
+		ServiceName: cfg.ServiceName,
 		Sampler: &config.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 1,
 		}, Reporter: &config.ReporterConfig{
 			LogSpans:            false,
 			BufferFlushInterval: 1 * time.Second,
-			LocalAgentHostPort:  jaegerHost,
+			LocalAgentHostPort:  cfg.JaegerHost,
 		},
 	}
 
