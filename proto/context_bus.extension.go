@@ -455,24 +455,13 @@ func (m *SpanMetadata) ParentSpanContext() jaeger.SpanContext {
 }
 
 func (m *EventData) GetPreviousEventData(name string) *EventData {
-	prev := m.PrevEventData
-	if prev == nil {
-		// todo not found
-		fmt.Println("todo not found")
-	}
-	found := prev.Event.Recorder.Name == name
-	for !found && prev != nil {
+	for prev := m.PrevEventData; prev != nil; prev = prev.PrevEventData {
 		if prev.Event.Recorder.Name == name {
-			found = true
-			break
+			return prev
 		}
-		prev = prev.PrevEventData
 	}
 
-	if found {
-		return prev
-	}
-
+	fmt.Println("todo not found", name)
 	return nil
 }
 
