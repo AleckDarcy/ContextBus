@@ -454,14 +454,19 @@ func (m *SpanMetadata) ParentSpanContext() jaeger.SpanContext {
 	return jaeger.NewSpanContext(jaeger.TraceID{High: m.TraceIdHigh, Low: m.TraceIdLow}, jaeger.SpanID(m.ParentId), 0, m.Sampled, m.Baggage)
 }
 
+func (m *SpanMetadata) HexString() string {
+	return fmt.Sprintf("sampled:%v trace_id_high:%x(%d) trace_id_low:%x(%d) span_id:%x(%d) parent_id:%x(%d)",
+		m.Sampled, m.TraceIdHigh, m.TraceIdHigh, m.TraceIdLow, m.TraceIdLow, m.SpanId, m.SpanId, m.ParentId, m.ParentId)
+}
+
 func (m *EventData) GetPreviousEventData(name string) *EventData {
 	for prev := m.PrevEventData; prev != nil; prev = prev.PrevEventData {
+		// fmt.Println(prev.Event.Recorder.Name, "|", name)
 		if prev.Event.Recorder.Name == name {
 			return prev
 		}
 	}
 
-	fmt.Println("todo not found", name)
 	return nil
 }
 
