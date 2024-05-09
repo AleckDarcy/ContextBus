@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/AleckDarcy/ContextBus/configure"
 )
 
 const URL = "http://localhost:5001"
@@ -58,10 +60,12 @@ type request struct {
 }
 
 type taskSetting struct {
-	total  int
-	thread int
-	speed  int
-	cbcID  int
+	total        int
+	threads      int
+	speed        int
+	cbcID        int64
+	cbTraceRatio int
+	cbTraceCount int
 }
 
 type result struct {
@@ -74,47 +78,62 @@ func getUser() *user {
 	return users[rand.Int()%500]
 }
 
-func searchHotelParaGen(random bool, total, cbcID int) *params {
-	if !random {
-		return &params{
-			size:   1,
-			params: []*param{{method: http.MethodGet, path: URL + fmt.Sprintf("/hotels?cbcID=%d&inDate=2015-04-09&outDate=2015-04-10&lat=37.7749&lon=-122.4194", cbcID)}},
-		}
+func searchHotelParaGen(random bool, task *taskSetting) *params {
+	if task.cbTraceRatio > 100 {
+		task.cbTraceRatio = 100
+	} else if task.cbTraceRatio < 0 {
+		task.cbTraceRatio = 0
 	}
 
 	params := &params{
-		size:   total,
-		params: make([]*param, total),
+		size:   task.total,
+		params: make([]*param, task.total),
 	}
 
-	for i := 0; i < total; i++ {
-		in_date := rand.Int()%14 + 9                        // 9 to 22
-		out_date := rand.Int()%(24-in_date-1) + in_date + 1 // in_date to 23
+	for i := 0; i < task.total; i++ {
+		in_date := 9
+		out_date := 10
+		lat := 37.7749
+		lon := -122.4194
 
-		lat := 38.0235 + float64(rand.Int()%200-100)/1000.0
-		lon := -122.095 + float64(rand.Int()%200-100)/1000.0
+		if random {
+			in_date = rand.Int()%14 + 9                        // 9 to 22
+			out_date = rand.Int()%(24-in_date-1) + in_date + 1 // in_date to 23
+
+			lat = 38.0235 + float64(rand.Int()%200-100)/1000.0
+			lon = -122.095 + float64(rand.Int()%200-100)/1000.0
+		}
+
+		cbcID := task.cbcID
+		if task.cbcID == configure.CBCID_DEFAULT {
+			if rand.Int()%100 < task.cbTraceRatio {
+				task.cbTraceCount++
+			} else {
+				cbcID = configure.CBCID_TRACEBYPASS
+			}
+		}
 
 		params.params[i] = &param{
 			method: http.MethodGet,
-			path: fmt.Sprintf("%s/hotels?inDate=2015-04-%02d&outDate=2015-04-%02d&lat=%.4f&lon=%.4f",
-				URL, in_date, out_date, lat, lon),
+			path: fmt.Sprintf("%s/hotels?cbcID=%d&inDate=2015-04-%02d&outDate=2015-04-%02d&lat=%.4f&lon=%.4f",
+				URL, cbcID, in_date, out_date, lat, lon),
 		}
 	}
 
 	return params
 }
 
-func recommendParaGen(random bool, total, cbcID int) *params {
+func recommendParaGen(random bool, task *taskSetting) *params {
 	if !random {
 
 	}
 
 	params := &params{
-		size:   total,
-		params: make([]*param, total),
+		size:   task.total,
+		params: make([]*param, task.total),
 	}
 
-	for i := 0; i < total; i++ {
+	for i := 0; i < task.total; i++ {
 		coin := rand.Float64()
 		req_param := ""
 		if coin < 0.33 {
@@ -138,13 +157,13 @@ func recommendParaGen(random bool, total, cbcID int) *params {
 	return params
 }
 
-func reserveParaGen(random bool, total, cbcID int) *params {
+func reserveParaGen(random bool, task *taskSetting) *params {
 	params := &params{
-		size:   total,
-		params: make([]*param, total),
+		size:   task.total,
+		params: make([]*param, task.total),
 	}
 
-	for i := 0; i < total; i++ {
+	for i := 0; i < task.total; i++ {
 		in_date := rand.Int()%14 + 9           // 9 to 22
 		out_date := rand.Int()%4 + in_date + 1 // in_date + 1 to in_date + 4
 
@@ -223,26 +242,26 @@ func resultPool(results []*result, resPool chan *result, total int, signal chan 
 	signal <- struct{}{}
 }
 
-func worker(paras *params, random bool, total, threads, speed int) {
-	results := make([]*result, total)
-	signal := make(chan struct{}, threads)
-	reqPool := make(chan *request, threads)
-	resPool := make(chan *result, total)
+func worker(paras *params, random bool, task *taskSetting) {
+	results := make([]*result, task.total)
+	signal := make(chan struct{}, task.threads)
+	reqPool := make(chan *request, task.threads)
+	resPool := make(chan *result, task.total)
 
-	for i := 0; i < threads; i++ {
+	for i := 0; i < task.threads; i++ {
 		go client(reqPool, resPool, signal)
 	}
 
 	resSig := make(chan struct{}, 1)
-	go resultPool(results, resPool, total, resSig)
+	go resultPool(results, resPool, task.total, resSig)
 
 	start := time.Now().UnixNano()
-	for i := 0; i < total; {
+	for i := 0; i < task.total; {
 		startI := time.Now().UnixNano()
 		expEndI := startI + time.Second.Nanoseconds()
 
 		startID := i
-		for ; i < startID+speed && i < total; i++ {
+		for ; i < startID+task.speed && i < task.total; i++ {
 			para := paras.get(i)
 			reqPool <- &request{
 				id:   i,
@@ -251,7 +270,7 @@ func worker(paras *params, random bool, total, threads, speed int) {
 		}
 
 		endI := time.Now().UnixNano()
-		if endI < expEndI && i != total {
+		if endI < expEndI && i != task.total {
 			fmt.Println("sleep for", time.Duration(expEndI-endI))
 			time.Sleep(time.Duration(expEndI - endI))
 		}
@@ -262,23 +281,23 @@ func worker(paras *params, random bool, total, threads, speed int) {
 
 	latency := float64(0)
 	errCount := 0
-	for i := 0; i < total; i++ {
-		latency += float64(results[i].latency) / float64(total)
+	for i := 0; i < task.total; i++ {
+		latency += float64(results[i].latency) / float64(task.total)
 		if results[i].err {
 			errCount++
 		}
 	}
 
-	fmt.Println(random, total, threads, speed, time.Duration(latency), int(float64(total)/(float64(end-start)/float64(time.Second.Nanoseconds()))), errCount)
+	fmt.Println(random, task.total, task.threads, task.speed, time.Duration(latency), int(float64(task.total)/(float64(end-start)/float64(time.Second.Nanoseconds()))), fmt.Sprintf("%d%%(%d)", task.cbTraceRatio, task.cbTraceCount), errCount)
 }
 
-type api func(random bool, total, threads, speed, cbcID int)
+type api func(random bool, task *taskSetting)
 
 func run(a api, tasks []*taskSetting) {
 	sleep := 5 * time.Second
 
 	for i, task := range tasks {
-		a(false, task.total, task.thread, task.speed, task.cbcID)
+		a(false, task)
 
 		if i != len(tasks)-1 {
 			time.Sleep(sleep)
@@ -286,32 +305,32 @@ func run(a api, tasks []*taskSetting) {
 	}
 }
 
-func searchHotel(random bool, total, threads, speed, cbcID int) {
-	paras := searchHotelParaGen(random, total, cbcID)
+func searchHotel(random bool, task *taskSetting) {
+	paras := searchHotelParaGen(random, task)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)
 	}
 
-	worker(paras, random, total, threads, speed)
+	worker(paras, random, task)
 }
 
-func recommend(random bool, total, threads, speed int, cbcID int) {
-	paras := recommendParaGen(random, total, cbcID)
+func recommend(random bool, task *taskSetting) {
+	paras := recommendParaGen(random, task)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)
 	}
 
-	worker(paras, random, total, threads, speed)
+	worker(paras, random, task)
 }
 
-func reserve(random bool, total, threads, speed int, cbcID int) {
-	paras := reserveParaGen(random, total, cbcID)
+func reserve(random bool, task *taskSetting) {
+	paras := reserveParaGen(random, task)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)
 	}
 
-	worker(paras, random, total, threads, speed)
+	worker(paras, random, task)
 }

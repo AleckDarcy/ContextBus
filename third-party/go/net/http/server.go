@@ -18,8 +18,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AleckDarcy/ContextBus"
 	"github.com/AleckDarcy/ContextBus/background"
-
 	"github.com/AleckDarcy/ContextBus/configure"
 	cb_context "github.com/AleckDarcy/ContextBus/context"
 	cb "github.com/AleckDarcy/ContextBus/proto"
@@ -75,6 +75,27 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					r = r.WithContext(ctx)
 
 					fmt.Printf("ContextBus ServeHTTP set ContextBus context: %+v\n", cbCtx)
+					ContextBus.OnSubmission(cbCtx, &cb.EventWhere{}, &cb.EventRecorder{
+						Type: cb.EventRecorderType_EventRecorderServiceHandler,
+						Name: r.URL.Path[1:] + ".1",
+					}, &cb.EventMessage{
+						Attrs:   nil,
+						Message: "ServeHTTP starts",
+						Paths:   nil,
+					})
+
+					f.f(w, r)
+
+					ContextBus.OnSubmission(cbCtx, &cb.EventWhere{}, &cb.EventRecorder{
+						Type: cb.EventRecorderType_EventRecorderServiceHandler,
+						Name: r.URL.Path[1:] + ".2",
+					}, &cb.EventMessage{
+						Attrs:   nil,
+						Message: "ServeHTTP ends",
+						Paths:   nil,
+					})
+
+					return
 				}
 			} else {
 				fmt.Printf("ContextBus ServeHTTP bypassed, err: %v\n", err)

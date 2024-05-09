@@ -50,7 +50,11 @@ var cfg3 = &cb.Configure{
 }
 
 func TestObservationBus_Observation(t *testing.T) {
-	go background.ObservationBus.Run(nil)
+	go background.ObservationBus.Run(&configure.ServerConfigure{
+		ServiceName:         "test",
+		EnvironmentProfiler: true,
+		ObservationBus:      true,
+	}, make(chan struct{}))
 
 	id := int64(2)
 	configure.Store.SetConfigure(id, cfg2)
@@ -80,7 +84,11 @@ func TestObservationBus_Observation(t *testing.T) {
 }
 
 func TestObservationBus_Reaction(t *testing.T) {
-	go background.ObservationBus.Run(nil)
+	go background.ObservationBus.Run(&configure.ServerConfigure{
+		ServiceName:         "test",
+		EnvironmentProfiler: true,
+		ObservationBus:      true,
+	}, make(chan struct{}))
 
 	id := int64(3)
 	configure.Store.SetConfigure(id, cfg3)

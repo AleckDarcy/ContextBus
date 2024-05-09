@@ -204,7 +204,8 @@ var prometheusCfg = &cb.PrometheusConfiguration{
 }
 
 func TestObservation(t *testing.T) {
-	background.Run(&background.Configure{
+	background.Run(&configure.ServerConfigure{
+		ServiceName:         "test",
 		EnvironmentProfiler: true,
 		ObservationBus:      true,
 	})
@@ -224,8 +225,8 @@ func TestObservation(t *testing.T) {
 					Out:   cb.LogOutType_Stdout,
 				},
 				Tracing: &cb.TracingConfigure{
-					Name:     "EventA",
-					PrevName: "",
+					SpanName:      "EventA",
+					PrevEventName: "",
 					Attrs: []*cb.AttributeConfigure{
 						cb.Test_AttributeConfigure_Rest_Method,
 						cb.Test_AttributeConfigure_Rest_Handler,
@@ -286,8 +287,8 @@ func TestObservation(t *testing.T) {
 					Out:   cb.LogOutType_Stdout,
 				},
 				Tracing: &cb.TracingConfigure{
-					Name:     "EventA",
-					PrevName: "EventA-starts",
+					SpanName:      "EventA",
+					PrevEventName: "EventA-starts",
 					Attrs: []*cb.AttributeConfigure{
 						cb.Test_AttributeConfigure_Rest_Method,
 						cb.Test_AttributeConfigure_Rest_Handler,
@@ -312,8 +313,8 @@ func TestObservation(t *testing.T) {
 					Out:   cb.LogOutType_Stdout,
 				},
 				Tracing: &cb.TracingConfigure{
-					Name:     "EventB",
-					PrevName: "",
+					SpanName:      "EventB",
+					PrevEventName: "",
 					Attrs: []*cb.AttributeConfigure{
 						cb.Test_AttributeConfigure_Rest_Method,
 						cb.Test_AttributeConfigure_Rest_Handler,
@@ -345,8 +346,8 @@ func TestObservation(t *testing.T) {
 					Out:   cb.LogOutType_Stdout,
 				},
 				Tracing: &cb.TracingConfigure{
-					Name:     "EventB",
-					PrevName: "EventB-starts",
+					SpanName:      "EventB",
+					PrevEventName: "EventB-starts",
 					Attrs: []*cb.AttributeConfigure{
 						cb.Test_AttributeConfigure_Rest_Method,
 						cb.Test_AttributeConfigure_Rest_Handler,

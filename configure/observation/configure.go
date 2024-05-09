@@ -5,7 +5,6 @@ import (
 	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
-	"github.com/AleckDarcy/ContextBus/third-party/github.com/uber/jaeger-client-go"
 	"github.com/rs/zerolog"
 
 	"fmt"
@@ -13,39 +12,52 @@ import (
 	"time"
 )
 
-// Prepare pre-allocates SpanID and get stacktrace
+// Prepare gets stacktrace and pre-allocates SpanID
 func (c *Configure) Prepare(ctx *context.Context, ed *cb.EventData) {
-	if c.Tracing == nil { // no tracing required
-		return
-	} else if c.Tracing.PrevName != "" { //
-		return
-	}
-
 	if c.IsStacktrace(ctx) { // capture stacktrace
 		// todo get stacktrace
 	}
 
-	fmt.Printf("request context: %+v\n", ctx.GetRequestContext())
-	reqSM := ctx.GetRequestContext().GetSpanMetadata() // parent span from caller
-	if reqSM == nil {
-		fmt.Println("request span metadata not found")
-		return
-	} else if !reqSM.Sampled {
-		fmt.Println("request not sampled")
+	if c.Tracing == nil { // no tracing required
 		return
 	}
 
-	fmt.Println("set span metadata")
-	sm := &cb.SpanMetadata{
-		Sampled:     true,
-		TraceIdHigh: reqSM.TraceIdHigh,
-		TraceIdLow:  reqSM.TraceIdLow,
-		SpanId:      ctx.GetTracer().RandomID(),
-		ParentId:    reqSM.SpanId,
-	}
+	// deal with span
+	if c.Tracing.Start {
+		// start a new span
+		var parentSM *cb.SpanMetadata
+		if c.Tracing.ParentName != "" { // parent span from previous event
+			prevED := ed.GetPreviousEventData(c.Tracing.ParentName)
+			if prevED == nil {
+				fmt.Println("previous event data not found")
+				return
+			}
+			parentSM = prevED.SpanMetadata
+			// fmt.Printf("previous span metadata: %s\n", parentSM.HexString())
+		} else {
+			parentSM = ctx.GetRequestContext().GetSpanMetadata() // parent span from caller
+			// fmt.Printf("request span metadata: %s\n", parentSM.HexString())
+		}
 
-	ed.SpanMetadata = sm
-	ctx.SetSpanMetadata(sm)
+		if parentSM == nil {
+			fmt.Println("parent span metadata not found")
+			return
+		} else if !parentSM.Sampled {
+			fmt.Println("request not sampled")
+			return
+		}
+
+		sm := &cb.SpanMetadata{
+			Sampled:     true,
+			TraceIdHigh: parentSM.TraceIdHigh,
+			TraceIdLow:  parentSM.TraceIdLow,
+			SpanId:      ctx.GetTracer().RandomID(),
+			ParentId:    parentSM.SpanId,
+		}
+
+		// fmt.Printf("set span metadata: %s\n", sm.HexString())
+		ed.SpanMetadata = sm
+	}
 }
 
 // IsStacktrace returns true if any observation configuration needs stacktrace
@@ -187,19 +199,20 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 func (c *TracingConfigure) Do(ctx *context.Context, ed *cb.EventData) int {
 	if c == nil {
 		return 0
-	} else if c.PrevName == "" { // skip
+	} else if !c.End { // skip
 		return 0
 	}
 
-	prev := ed.GetPreviousEventData(c.PrevName)
+	// span metadata is stored in previous event data
+	prev := ed.GetPreviousEventData(c.PrevEventName)
 	if prev == nil {
-		fmt.Println("previous event not found", c.PrevName)
+		fmt.Println("previous event not found", c.PrevEventName)
 		return 0
 	}
 
 	sm := prev.SpanMetadata
 	if sm == nil {
-		fmt.Println("previous span metadata not found", c.PrevName)
+		fmt.Println("previous span metadata not found", c.PrevEventName)
 		return 0
 	}
 
@@ -213,12 +226,12 @@ func (c *TracingConfigure) Do(ctx *context.Context, ed *cb.EventData) int {
 		ReferencedContext: sm.ParentSpanContext(),
 	}
 
-	fmt.Println("span reference", sr)
+	// fmt.Printf("span reference %s\n", sm.HexString())
 
-	span := ctx.GetTracer().StartSpan(c.Name, sr, opentracing.SpanID(sm.SpanId), opentracing.StartTime(time.Unix(0, prev.Event.When.Time)), opentracing.Tags(tags))
+	span := ctx.GetTracer().StartSpan(c.SpanName, sr, opentracing.SpanID(sm.SpanId), opentracing.StartTime(time.Unix(0, prev.Event.When.Time)), opentracing.Tags(tags))
 	span.FinishWithOptions(opentracing.FinishOptions{FinishTime: time.Unix(0, ed.Event.When.Time)})
 
-	fmt.Printf("todo tracing span=%s (from %s to %s)\n", span.Context().(jaeger.SpanContext).ToString(), prev.Event.Recorder.Name, ed.Event.Recorder.Name)
+	// fmt.Printf("todo tracing span=%s (from %s to %s)\n", span.Context().(jaeger.SpanContext).ToString(), prev.Event.Recorder.Name, ed.Event.Recorder.Name)
 
 	return 1
 }
