@@ -56,7 +56,7 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if cfgIDInt, err := strconv.Atoi(cfgIDStr); err == nil {
 				cfgID := int64(cfgIDInt)
 				if cfgID == configure.CBCID_BYPASS {
-					fmt.Println("ContextBus ServeHTTP bypassed, cfgID == CBCID_BYPASS")
+					//fmt.Println("ContextBus ServeHTTP bypassed, cfgID == CBCID_BYPASS")
 				} else {
 					tracer := background.ObservationBus.GetTracer()
 					reqCtx := cb_context.NewRequestContext("", cfgID, nil)
@@ -74,7 +74,7 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					ctx := context.WithValue(r.Context(), cb_context.CB_CONTEXT_NAME, cbCtx)
 					r = r.WithContext(ctx)
 
-					fmt.Printf("ContextBus ServeHTTP set ContextBus context: %+v\n", cbCtx)
+					// fmt.Printf("ContextBus ServeHTTP set ContextBus context: %+v\n", cbCtx)
 					ContextBus.OnSubmission(cbCtx, &cb.EventWhere{}, &cb.EventRecorder{
 						Type: cb.EventRecorderType_EventRecorderServiceHandler,
 						Name: r.URL.Path[1:] + ".1",
@@ -104,7 +104,7 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("ContextBus ServeHTTP bypassed, parameter missing")
 		}
 	} else {
-		fmt.Println("ContextBus ServeHTTP bypassed")
+		// fmt.Println("ContextBus ServeHTTP bypassed")
 	}
 
 	f.f(w, r)

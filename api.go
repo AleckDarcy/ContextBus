@@ -12,9 +12,9 @@ import (
 	cb "github.com/AleckDarcy/ContextBus/proto"
 )
 
-// FromHTTP reads Context from the http.Request.
+// FromContext reads Context from the http.Request.
 // returns ContextBus context
-func FromHTTP(ctx context.Context) (*cb_context.Context, bool) {
+func FromContext(ctx context.Context) (*cb_context.Context, bool) {
 	if cbCtxItf := ctx.Value(cb_context.CB_CONTEXT_NAME); cbCtxItf != nil {
 		// fmt.Printf("retrieved ContextBus context from HTTP: %+v\n", cbCtxItf)
 

@@ -59,7 +59,8 @@ enum PrerequisiteNodeType {
     PrerequisiteNodeType_ = 0;
 
     PrerequisiteMessage_ = 1;
-    PrerequisiteLogic_   = 2;
+    PrerequisiteEvent_   = 2;
+    PrerequisiteLogic_   = 3;
 }
 
 message ConditionTree {
@@ -74,6 +75,11 @@ message PrerequisiteMessage {
     int64 parent        = 100;
 }
 
+message PrerequisiteEvent {
+    string name   = 1;
+    int64 latency = 2; // in ms
+}
+
 message PrerequisiteLogic {
     LogicType type = 1;
 
@@ -85,7 +91,8 @@ message PrerequisiteNode {
     int64  id                   = 1; // for tree indexing
     PrerequisiteNodeType type   = 2;
     PrerequisiteMessage message = 3;
-    PrerequisiteLogic logic     = 4;
+    PrerequisiteEvent prevEvent = 4;
+    PrerequisiteLogic logic     = 5;
 }
 
 // prerequisite tree
@@ -107,13 +114,18 @@ enum ReactionType {
     ReactionType_ = 0;
 
     // fault injection
-    FaultCrash = 1;
-    FaultDelay = 2;
-    FaultDrop  = 3;
+    ReactionFaultCrash = 1;
+    ReactionFaultDelay = 2;
+    ReactionFaultDrop  = 3;
 
     // traffic (e.g., load-balancing, traffic shaping)
-    TrafficBalance = 101;
-    TrafficRouting = 102;
+    ReactionTrafficBalance = 101;
+    ReactionTrafficRouting = 102;
+
+
+    // Notification & alert
+    ReactionPrintLog = 1001;
+    ReactionEmail    = 1002;
 }
 
 message FaultDelayParam {
