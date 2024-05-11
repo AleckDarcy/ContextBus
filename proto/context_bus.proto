@@ -58,9 +58,9 @@ enum LogicType {
 enum PrerequisiteNodeType {
     PrerequisiteNodeType_ = 0;
 
-    PrerequisiteMessage_ = 1;
-    PrerequisiteEvent_   = 2;
-    PrerequisiteLogic_   = 3;
+    PrerequisiteMessage_            = 1;
+    PrerequisiteLogic_              = 2;
+    PrerequisiteAfterObservation_   = 3;
 }
 
 message ConditionTree {
@@ -121,7 +121,6 @@ enum ReactionType {
     // traffic (e.g., load-balancing, traffic shaping)
     ReactionTrafficBalance = 101;
     ReactionTrafficRouting = 102;
-
 
     // Notification & alert
     ReactionPrintLog = 1001;
