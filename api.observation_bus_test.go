@@ -28,14 +28,14 @@ var cfg2 = &cb.Configure{
 var cfg3 = &cb.Configure{
 	Reactions: map[string]*cb.ReactionConfigure{
 		"EventD": {
-			Type: cb.ReactionType_FaultCrash,
+			Type: cb.ReactionType_ReactionFaultCrash,
 			PreTree: &cb.PrerequisiteTree{
 				Nodes: []*cb.PrerequisiteNode{
 					cb.NewPrerequisiteMessageNode(0, "EventA", &cb.ConditionTree{}, -1, nil),
 				},
 			}},
 		"EventC": {
-			Type: cb.ReactionType_FaultCrash,
+			Type: cb.ReactionType_ReactionFaultCrash,
 			PreTree: &cb.PrerequisiteTree{
 				Nodes: []*cb.PrerequisiteNode{
 					cb.NewPrerequisiteLogicNode(0, cb.LogicType_And_, -1, []int64{1, 2}),

@@ -490,6 +490,19 @@ message PrometheusConfiguration {
 }
 
 /******************** Integration ********************/
+message LatencyMetric {
+    int64 total             = 1;
+    repeated double latency = 2;
+    double mean             = 3;
+    double median           = 4;
+    double min              = 5;
+    double max              = 6;
+}
+
+message PerfMetric {
+    repeated LatencyMetric latency = 1;
+}
+
 message Payload {
     // workflow-level
     int64 request_id                = 1;
@@ -501,4 +514,6 @@ message Payload {
     SpanMetadata parent = 11;
     MessageType m_type  = 12;
     string uuid         = 13;
+
+    PerfMetric metric = 21;
 }

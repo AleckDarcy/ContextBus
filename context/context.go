@@ -1,10 +1,11 @@
 package context
 
 import (
+	"testing"
+	"time"
+
 	cb "github.com/AleckDarcy/ContextBus/proto"
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
-
-	"testing"
 )
 
 const CB_CONTEXT_NAME = "context_bus"
@@ -112,6 +113,8 @@ type Context struct {
 
 	tracer opentracing.Tracer
 	span   *cb.SpanMetadata
+
+	timestamp int64
 }
 
 func NewContext(reqCtx *RequestContext, eveCtx *EventContext) *Context {
@@ -137,6 +140,14 @@ func (c *Context) Payload() *cb.Payload {
 		MType:     cb.MessageType_Message_Request,
 		Uuid:      "",
 	}
+}
+
+func (c *Context) SetTimestamp() {
+	c.timestamp = time.Now().UnixNano()
+}
+
+func (c *Context) GetTimestamp() int64 {
+	return c.timestamp
 }
 
 func (c *Context) GetRequestContext() *RequestContext {

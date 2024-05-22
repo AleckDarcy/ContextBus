@@ -21,7 +21,8 @@ type store struct {
 var Store = store{configures: map[int64]*Configure{}}
 
 const CBCID_BYPASS = int64(-100)
-const CBCID_TRACEBYPASS = int64(1)
+const CBCID_TRACEBYPASS = int64(2)
+const CBCID_LOGGINGYPASS = int64(1)
 const CBCID_DEFAULT = int64(0)
 
 // DefaultJSONLogging prints Message to Stdout

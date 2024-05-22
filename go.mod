@@ -5,11 +5,14 @@ go 1.17
 require (
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.6.0
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.1
 	github.com/rs/zerolog v1.32.0
 	github.com/shirou/gopsutil/v3 v3.24.2
 	go.uber.org/atomic v1.11.0
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	google.golang.org/grpc v1.31.0
 )
 
 require (
@@ -21,7 +24,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
@@ -33,5 +35,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/text v0.3.6 // indirect
+	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 )

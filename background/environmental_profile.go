@@ -136,7 +136,7 @@ func (e *environmentProfiler) GetEnvironmentProfile() *cb.EnvironmentalProfile {
 	e.latest = ep
 	e.lock.Unlock()
 
-	fmt.Println("GetEnvironmentProfile()")
+	//fmt.Println("GetEnvironmentProfile()")
 
 	return ep
 }

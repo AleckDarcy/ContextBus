@@ -77,6 +77,20 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 				cntT += cntT_
 				cntM += cntM_
 			}
+
+			// check after observation alerts
+			if rac := cfg.GetReaction(pay.ed.Event.Recorder.Name); rac != nil {
+				if rac.Type == cb.ReactionType_ReactionPrintLog { // todo
+					prevName := rac.PreTree.Nodes[0].PrevEvent.GetName()
+					prevED := pay.ed.GetPreviousEventData(prevName)
+					if prevED != nil {
+						latency := (pay.ed.Event.When.Time - prevED.Event.When.Time) / int64(time.Millisecond)
+						if latency > rac.PreTree.Nodes[0].PrevEvent.GetLatency() {
+							fmt.Println("report", latency, "ms")
+						}
+					}
+				}
+			}
 		}
 
 		cnt++

@@ -9,21 +9,27 @@ import (
 
 func TestSearchHotel(t *testing.T) {
 	total := 8192
-	speed := 2400
+	speed := 3000
 	cbcID := configure.CBCID_BYPASS
-	cbcTraceRatio := 0
+	cbcTraceRatio := 100
 
 	tasks := []*taskSetting{
-		{total: total / 8, threads: 128, speed: speed, cbcID: configure.CBCID_DEFAULT, cbTraceRatio: 20}, // warm up
+		{total: total / 8, threads: 128, speed: speed, cbcID: configure.CBCID_LOGGINGYPASS, cbTraceRatio: 0}, // warm up
 
+		// perf metric on
 		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 64, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 32, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 16, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 8, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 4, speed: speed / 2, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 2, speed: speed / 4, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 1, speed: speed / 8, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+
+		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 64, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 32, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 16, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 8, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 4, speed: speed / 2, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 2, speed: speed / 4, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 1, speed: speed / 8, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
 
 		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: 0},
 		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: 1},

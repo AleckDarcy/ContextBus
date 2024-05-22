@@ -46,8 +46,10 @@ func FromPayload(ctx context.Context, pay *cb.Payload) (*cb_context.Context, boo
 
 // OnSubmission user interface
 func OnSubmission(ctx *cb_context.Context, where *cb.EventWhere, who *cb.EventRecorder, app *cb.EventMessage) {
+	ctx.SetTimestamp()
+
 	er := &cb.EventRepresentation{
-		When:     &cb.EventWhen{Time: time.Now().UnixNano()},
+		When:     &cb.EventWhen{Time: ctx.GetTimestamp()},
 		Where:    where,
 		Recorder: who,
 		What:     &cb.EventWhat{Application: app},
@@ -124,7 +126,7 @@ func OnSubmission(ctx *cb_context.Context, where *cb.EventWhere, who *cb.EventRe
 				fmt.Println("prerequisites accomplished")
 
 				switch rac.Type {
-				case cb.ReactionType_FaultDelay:
+				case cb.ReactionType_ReactionFaultDelay:
 					params := rac.Params.(*cb.ReactionConfigure_FaultDelay).FaultDelay
 
 					time.Sleep(time.Duration(params.Ms) * time.Millisecond)

@@ -1,15 +1,18 @@
 package load
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/AleckDarcy/ContextBus/configure"
+	cb "github.com/AleckDarcy/ContextBus/proto"
 )
 
 const URL = "http://localhost:5001"
@@ -69,9 +72,8 @@ type taskSetting struct {
 }
 
 type result struct {
-	latency    int64
-	err        bool
-	hasContent bool
+	latency int64
+	err     bool
 }
 
 func getUser() *user {
@@ -110,6 +112,12 @@ func searchHotelParaGen(random bool, task *taskSetting) *params {
 				task.cbTraceCount++
 			} else {
 				cbcID = configure.CBCID_TRACEBYPASS
+			}
+		} else if task.cbcID == configure.CBCID_LOGGINGYPASS {
+			if rand.Int()%100 < task.cbTraceRatio {
+				task.cbTraceCount++
+			} else {
+				cbcID = configure.CBCID_BYPASS
 			}
 		}
 
@@ -199,6 +207,34 @@ func resetDB() error {
 	return nil
 }
 
+func getMetric() (*cb.PerfMetric, error) {
+	resp, err := http.Get(fmt.Sprintf("%s/metric", URL))
+	if err != nil {
+		return nil, err
+	} else if b, err := io.ReadAll(resp.Body); err != nil {
+		return nil, err
+	} else {
+		m := map[string]interface{}{}
+
+		if err = json.Unmarshal(b, &m); err != nil {
+			return nil, err
+		}
+
+		ok := false
+		if m, ok = m["metric"].(map[string]interface{}); !ok {
+			//return nil, errors.New("no metric found")
+			return nil, nil
+		}
+
+		b, _ = json.Marshal(m)
+
+		res := &cb.PerfMetric{}
+		json.Unmarshal(b, res)
+
+		return res, nil
+	}
+}
+
 func client(reqPool chan *request, resPool chan *result, signal chan struct{}) {
 	for {
 		select {
@@ -217,15 +253,14 @@ func client(reqPool chan *request, resPool chan *result, signal chan struct{}) {
 				resp, err = http.Post(req.para.path, "application/x-www-form-urlencoded", nil)
 			}
 			end := time.Now().UnixNano()
+			res.latency = end - start
+
 			if err != nil {
 				res.err = true
-				log.Print(err)
+				if rand.Int()%100 == 1 {
+					log.Print(err)
+				}
 			} else {
-				res.latency = end - start
-				//body, err := io.ReadAll(resp.Body)
-				//if err != nil {
-				//	res.err = true
-				//}
 				resp.Body.Close()
 			}
 
@@ -288,7 +323,8 @@ func worker(paras *params, random bool, task *taskSetting) {
 		}
 	}
 
-	fmt.Println(random, task.total, task.threads, task.speed, time.Duration(latency), int(float64(task.total)/(float64(end-start)/float64(time.Second.Nanoseconds()))), fmt.Sprintf("%d%%(%d)", task.cbTraceRatio, task.cbTraceCount), errCount)
+	fmt.Printf("%v,%d,%d,%d,%v,%d,%s,%d\n",
+		random, task.total, task.threads, task.speed, time.Duration(latency), int(float64(task.total)/(float64(end-start)/float64(time.Second.Nanoseconds()))), fmt.Sprintf("%d%%(%d)", task.cbTraceRatio, task.cbTraceCount), errCount)
 }
 
 type api func(random bool, task *taskSetting)
@@ -305,14 +341,78 @@ func run(a api, tasks []*taskSetting) {
 	}
 }
 
+var titleOnce = new(sync.Once)
+
 func searchHotel(random bool, task *taskSetting) {
 	paras := searchHotelParaGen(random, task)
 	//fmt.Println("example path:", paras.params[0].path)
 	if err := resetDB(); err != nil {
 		fmt.Println("reset db fail:", err)
+	} else if _, err = getMetric(); err != nil {
+		fmt.Println("reset metric fail:", err)
 	}
 
 	worker(paras, random, task)
+
+	perfMetric, err := getMetric()
+	if err != nil {
+		fmt.Println("get metric fail:", err)
+		return
+	} else if perfMetric == nil {
+		return
+	}
+
+	titleOnce.Do(func() {
+		fmt.Println("Type,Frontend,,,,,,,,,,,,,,,Search,,,,,,,,")
+		fmt.Println(",L1,O1,L2,O2,O3,L4,O4,L5,O5,L6,O6,L7,LogicTotal,ObservationTotal,Total,O1,L2,O2,L3,O3,L4,LogicTotal,ObservationTotal,Total")
+	})
+
+	latency := perfMetric.Latency
+
+	lFrontend := latency[cb.Metric_Frontend_SearchHandler_Logic_1].Median +
+		latency[cb.Metric_Frontend_SearchHandler_Logic_2].Median +
+		latency[cb.Metric_Frontend_SearchHandler_Logic_4].Median +
+		latency[cb.Metric_Frontend_SearchHandler_Logic_5].Median +
+		latency[cb.Metric_Frontend_SearchHandler_Logic_6].Median +
+		latency[cb.Metric_Frontend_SearchHandler_Logic_7].Median
+	oFrontend := latency[cb.Metric_Frontend_SearchHandler_1].Median +
+		latency[cb.Metric_Frontend_SearchHandler_2].Median +
+		latency[cb.Metric_Frontend_SearchHandler_3].Median +
+		latency[cb.Metric_Frontend_SearchHandler_4].Median +
+		latency[cb.Metric_Frontend_SearchHandler_5].Median +
+		latency[cb.Metric_Frontend_SearchHandler_6].Median
+	tFrontend := lFrontend + oFrontend
+
+	lSearch := latency[cb.Metric_Search_NearBy_Logic_2].Median +
+		latency[cb.Metric_Search_NearBy_Logic_3].Median +
+		latency[cb.Metric_Search_NearBy_Logic_4].Median
+	oSearch := latency[cb.Metric_Search_NearBy_Observation_1].Median +
+		latency[cb.Metric_Search_NearBy_Observation_2].Median +
+		latency[cb.Metric_Search_NearBy_Observation_3].Median
+	tSearch := lSearch + oSearch
+
+	fmt.Printf("Median,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f\n",
+		latency[cb.Metric_Frontend_SearchHandler_Logic_1].Median,
+		latency[cb.Metric_Frontend_SearchHandler_1].Median,
+		latency[cb.Metric_Frontend_SearchHandler_Logic_2].Median,
+		latency[cb.Metric_Frontend_SearchHandler_2].Median,
+		latency[cb.Metric_Frontend_SearchHandler_3].Median,
+		latency[cb.Metric_Frontend_SearchHandler_Logic_4].Median,
+		latency[cb.Metric_Frontend_SearchHandler_4].Median,
+		latency[cb.Metric_Frontend_SearchHandler_Logic_5].Median,
+		latency[cb.Metric_Frontend_SearchHandler_5].Median,
+		latency[cb.Metric_Frontend_SearchHandler_Logic_6].Median,
+		latency[cb.Metric_Frontend_SearchHandler_6].Median,
+		latency[cb.Metric_Frontend_SearchHandler_Logic_7].Median,
+		lFrontend, oFrontend, tFrontend,
+		latency[cb.Metric_Search_NearBy_Observation_1].Median,
+		latency[cb.Metric_Search_NearBy_Logic_2].Median,
+		latency[cb.Metric_Search_NearBy_Observation_2].Median,
+		latency[cb.Metric_Search_NearBy_Logic_3].Median,
+		latency[cb.Metric_Search_NearBy_Observation_3].Median,
+		latency[cb.Metric_Search_NearBy_Logic_4].Median,
+		lSearch, oSearch, tSearch,
+	)
 }
 
 func recommend(random bool, task *taskSetting) {

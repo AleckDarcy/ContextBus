@@ -58,9 +58,10 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if cfgID == configure.CBCID_BYPASS {
 					//fmt.Println("ContextBus ServeHTTP bypassed, cfgID == CBCID_BYPASS")
 				} else {
+					cfg := configure.Store.GetConfigure(cfgID)
 					tracer := background.ObservationBus.GetTracer()
 					reqCtx := cb_context.NewRequestContext("", cfgID, nil)
-					eveCtx := cb_context.NewEventContext(nil, &cb.PrerequisiteSnapshots{})
+					eveCtx := cb_context.NewEventContext(nil, cfg.InitializeSnapshots())
 					cbCtx := cb_context.NewContext(reqCtx, eveCtx).SetTracer(tracer)
 
 					// todo: fake span metadata of caller

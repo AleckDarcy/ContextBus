@@ -292,7 +292,7 @@ func (t *Tracer) startSpanWithOptions(
 			} else {
 				// managed by ContextBus
 				if options.SpanID != 0 {
-					print("replaced")
+					// print("replaced")
 					ctx.spanID = SpanID(options.SpanID)
 				} else {
 					ctx.spanID = SpanID(t.randomID())
