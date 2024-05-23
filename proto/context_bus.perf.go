@@ -102,7 +102,7 @@ func (m *PerfMetric) Calculate() *PerfMetric {
 			}
 
 			dstLatI.Total = total
-			fmt.Println("calculate latency metric (idx total):", i, total)
+			//fmt.Println("calculate latency metric (idx total):", i, total)
 
 			sort.Float64s(srcLatI.Latency[:total])
 

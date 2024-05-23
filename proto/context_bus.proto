@@ -396,9 +396,11 @@ message SpanMetadata {
 }
 
 message EventMetadata {
-    uint64 id               = 1;
-    ParentChildPointers pcp = 2; // parent-children pointer
-    int64 esp               = 3; // environmental snapshot pointer
+    uint64 req_id = 1;
+    uint64 eve_id = 2;
+
+    ParentChildPointers pcp = 11; // parent-children pointer
+    int64 esp               = 12; // environmental snapshot pointer
 }
 
 /******************** Event Data */
@@ -505,7 +507,7 @@ message PerfMetric {
 
 message Payload {
     // workflow-level
-    int64 request_id                = 1;
+    uint64 request_id               = 1;
     int64 config_id                 = 2;
     PrerequisiteSnapshots snapshots = 3; // witnessed by message sender
     PrerequisiteSnapshots addition  = 4; // witnessed by the current handler
