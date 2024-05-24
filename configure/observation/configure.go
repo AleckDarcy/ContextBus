@@ -150,6 +150,10 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 	}
 	e.buf = helper.JSONEncoder.EndString(e.buf)
 
+	// do ids
+	e.buf = helper.JSONEncoder.AppendKey(e.buf, "ID")
+	e.buf = helper.JSONEncoder.AppendIDs(e.buf, ed.Metadata.ReqId, ed.Metadata.EveId)
+
 	// do message
 	e.buf = helper.JSONEncoder.AppendKey(e.buf, "message")
 	msg := er.What.Application.GetMessage()
@@ -186,7 +190,7 @@ func (c *LoggingConfigure) Do(ed *cb.EventData) int {
 	case cb.LogOutType_Stdout:
 		fmt.Fprintln(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}, str)
 	case cb.LogOutType_Stderr:
-		fmt.Fprintln(os.Stderr, str)
+		fmt.Fprintln(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}, str)
 	case cb.LogOutType_File:
 
 	default:

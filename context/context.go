@@ -13,14 +13,16 @@ const CB_CONTEXT_NAME = "context_bus"
 // RequestContext is inter-service message context
 type RequestContext struct {
 	lib         string // name of network API
+	requestID   uint64
 	configureID int64
 	event       *cb.EventMessage
 	span        *cb.SpanMetadata // parent span
 }
 
-func NewRequestContext(lib string, configureID int64, msg *cb.EventMessage) *RequestContext {
+func NewRequestContext(lib string, requestID uint64, configureID int64, msg *cb.EventMessage) *RequestContext {
 	return &RequestContext{
 		lib:         lib,
+		requestID:   requestID,
 		configureID: configureID,
 		event:       msg,
 	}
@@ -28,6 +30,10 @@ func NewRequestContext(lib string, configureID int64, msg *cb.EventMessage) *Req
 
 func (c *RequestContext) GetLib() string {
 	return c.lib
+}
+
+func (c *RequestContext) GetRequestID() uint64 {
+	return c.requestID
 }
 
 func (c *RequestContext) GetConfigureID() int64 {
@@ -132,7 +138,7 @@ func (c *Context) Payload() *cb.Payload {
 	}
 
 	return &cb.Payload{
-		RequestId: 0,
+		RequestId: c.reqCtx.requestID,
 		ConfigId:  c.reqCtx.configureID,
 		Snapshots: c.eveCtx.snapshots,
 		Addition:  nil,

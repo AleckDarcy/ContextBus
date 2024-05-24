@@ -34,7 +34,7 @@ func FromPayload(ctx context.Context, pay *cb.Payload) (*cb_context.Context, boo
 	}
 
 	// todo
-	reqCtx := cb_context.NewRequestContext("", pay.ConfigId, nil).SetSpanMetadata(pay.Parent)
+	reqCtx := cb_context.NewRequestContext("", pay.RequestId, pay.ConfigId, nil).SetSpanMetadata(pay.Parent)
 	eveCtx := cb_context.NewEventContext(nil, &cb.PrerequisiteSnapshots{})
 
 	cbCtx := cb_context.NewContext(reqCtx, eveCtx).SetTracer(background.ObservationBus.GetTracer())
@@ -67,9 +67,10 @@ func OnSubmission(ctx *cb_context.Context, where *cb.EventWhere, who *cb.EventRe
 	esp := background.EnvironmentProfiler.GetLatest()
 
 	md := &cb.EventMetadata{
-		Id:  background.ObservationBus.NewEventID(),
-		Pcp: nil,
-		Esp: esp.Timestamp,
+		ReqId: reqCtx.GetRequestID(),
+		EveId: background.ObservationBus.NewEventID(),
+		Pcp:   nil,
+		Esp:   esp.Timestamp,
 	}
 
 	ed := &cb.EventData{

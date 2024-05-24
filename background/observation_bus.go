@@ -2,11 +2,14 @@ package background
 
 import (
 	// Context Bus
+	"os"
+
 	"github.com/AleckDarcy/ContextBus/configure"
 	"github.com/AleckDarcy/ContextBus/configure/observation"
 	"github.com/AleckDarcy/ContextBus/context"
 	"github.com/AleckDarcy/ContextBus/helper"
 	cb "github.com/AleckDarcy/ContextBus/proto"
+	"github.com/rs/zerolog"
 
 	// third-party
 	"github.com/AleckDarcy/ContextBus/third-party/github.com/opentracing/opentracing-go"
@@ -62,6 +65,10 @@ func (b *observationBus) OnSubmit(ctx *context.Context, ed *cb.EventData) {
 	}
 }
 
+var todoLoggingConfigure = &observation.LoggingConfigure{
+	Out: cb.LogOutType_Stdout,
+}
+
 func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 	for {
 		v, ok := b.queue.Dequeue()
@@ -86,7 +93,58 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 					if prevED != nil {
 						latency := (pay.ed.Event.When.Time - prevED.Event.When.Time) / int64(time.Millisecond)
 						if latency > rac.PreTree.Nodes[0].PrevEvent.GetLatency() {
-							fmt.Println("report", latency, "ms")
+							pay.ctx.GetRequestContext()
+							tags := map[string]interface{}{
+								"RequestID": pay.ed.GetMetadata().ReqId,
+								"EventID":   pay.ed.GetMetadata().EveId,
+							}
+
+							span := pay.ctx.GetTracer().StartSpan(prevName, opentracing.StartTime(time.Unix(0, prevED.Event.When.Time)), opentracing.Tags(tags))
+							span.FinishWithOptions(opentracing.FinishOptions{FinishTime: time.Unix(0, pay.ed.Event.When.Time)})
+
+							// print logs in reversed order
+							fmt.Printf("report high latency %d ms, from %s to %s, tags %v\n", latency, prevName, pay.ed.Event.Recorder.Name, tags)
+							todoLoggingConfigure.Do(pay.ed)
+
+							esp := int64(-1)
+
+							buf := make([]byte, 512)
+							for prevED != nil {
+								buf = buf[0:0]
+								if prevED.Metadata.Esp != esp {
+									es := EnvironmentProfiler.GetByID(prevED.Metadata.Esp)
+									esp = prevED.Metadata.Esp
+
+									if es != nil {
+										encoder := helper.JSONEncoder
+										buf = encoder.BeginObject(buf)
+
+										buf = helper.JSONEncoder.AppendKey(buf, "caller")
+										buf = helper.JSONEncoder.AppendString(buf, "environmental profile")
+
+										buf = helper.JSONEncoder.AppendKey(buf, "level")
+										buf = helper.JSONEncoder.AppendString(buf, "warn")
+
+										buf = helper.JSONEncoder.AppendKey(buf, "time")
+
+										buf = helper.JSONEncoder.BeginString(buf)
+										buf = time.Unix(0, esp).AppendFormat(buf, helper.TIME_FORMAT_DEFAULT)
+										buf = helper.JSONEncoder.EndString(buf)
+
+										buf = encoder.AppendKey(buf, "message")
+										buf = encoder.AppendString(buf, fmt.Sprintf("%v", es))
+										buf = helper.JSONEncoder.AppendKey(buf, "ID")
+										buf = helper.JSONEncoder.AppendIDs(buf, pay.ed.GetMetadata().ReqId, pay.ed.GetMetadata().EveId)
+										buf = encoder.EndObject(buf)
+
+										str := helper.BytesToString(buf)
+										fmt.Fprintln(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}, str)
+									}
+								}
+
+								todoLoggingConfigure.Do(prevED)
+								prevED = prevED.PrevEventData
+							}
 						}
 					}
 				}

@@ -421,7 +421,7 @@ func TestObservation(t *testing.T) {
 		id := req.cbPayload.ConfigId
 		cfg := configure.Store.GetConfigure(id)
 		ctx1 := new(context.Context).
-			SetRequestContext(context.NewRequestContext("rest", id, rest2).SetSpanMetadata(sm)).
+			SetRequestContext(context.NewRequestContext("rest", 0, id, rest2).SetSpanMetadata(sm)).
 			SetEventContext(new(context.EventContext).SetPrerequisiteSnapshots(req.cbPayload.Snapshots).SetOffsetSnapshots(cfg.InitializeSnapshots())).
 			SetTracer(background.ObservationBus.GetTracer())
 		rsp, err := handler2(ctx1, req)
@@ -479,7 +479,7 @@ func TestObservation(t *testing.T) {
 	}
 
 	ctx := new(context.Context).
-		SetRequestContext(context.NewRequestContext("rest", id, rest).SetSpanMetadata(sm)).
+		SetRequestContext(context.NewRequestContext("rest", 0, id, rest).SetSpanMetadata(sm)).
 		SetEventContext(context.NewEventContext(nil, cfg4_.InitializeSnapshots())).
 		SetTracer(background.ObservationBus.GetTracer())
 	handler1(ctx, nil)

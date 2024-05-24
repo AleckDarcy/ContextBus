@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/AleckDarcy/ContextBus"
 	"github.com/AleckDarcy/ContextBus/background"
@@ -48,6 +49,8 @@ func NewHandlerFunc(f http.HandlerFunc) http.Handler {
 	return &HandlerFunc{f: f}
 }
 
+var reqID uint64
+
 // ServeHTTP calls f(w, r).
 func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if on {
@@ -60,7 +63,7 @@ func (f *HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				} else {
 					cfg := configure.Store.GetConfigure(cfgID)
 					tracer := background.ObservationBus.GetTracer()
-					reqCtx := cb_context.NewRequestContext("", cfgID, nil)
+					reqCtx := cb_context.NewRequestContext("", atomic.AddUint64(&reqID, 1), cfgID, nil)
 					eveCtx := cb_context.NewEventContext(nil, cfg.InitializeSnapshots())
 					cbCtx := cb_context.NewContext(reqCtx, eveCtx).SetTracer(tracer)
 

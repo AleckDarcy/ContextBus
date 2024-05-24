@@ -117,7 +117,7 @@ func searchHotelParaGen(random bool, task *taskSetting) *params {
 			if rand.Int()%100 < task.cbTraceRatio {
 				task.cbTraceCount++
 			} else {
-				cbcID = configure.CBCID_BYPASS
+				cbcID = configure.CBCID_OBSERVATIONBYPASS
 			}
 		}
 

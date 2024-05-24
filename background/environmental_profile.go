@@ -19,12 +19,14 @@ var MEMSTATS = &runtime.MemStats{}
 type environmentProfiler struct {
 	latest *cb.EnvironmentalProfile
 	lock   sync.RWMutex
+	store  map[int64]*cb.EnvironmentalProfile
 }
 
 var EnvironmentProfiler = &environmentProfiler{
 	latest: &cb.EnvironmentalProfile{
 		Hardware: &cb.HardwareProfile{},
 	},
+	store: map[int64]*cb.EnvironmentalProfile{},
 }
 
 func (e *environmentProfiler) GetLatest() *cb.EnvironmentalProfile {
@@ -34,6 +36,16 @@ func (e *environmentProfiler) GetLatest() *cb.EnvironmentalProfile {
 
 	return latest
 }
+
+func (e *environmentProfiler) GetByID(id int64) *cb.EnvironmentalProfile {
+	e.lock.RLock()
+	ep := e.store[id]
+	e.lock.RUnlock()
+
+	return ep
+}
+
+var npPrev = EnvironmentProfiler.GetNetProfile()
 
 func (e *environmentProfiler) GetNetProfile() *cb.NetProfile {
 	n, err := net.IOCounters(false)
@@ -84,23 +96,17 @@ func (e *environmentProfiler) GetEnvironmentProfile() *cb.EnvironmentalProfile {
 	}
 
 	np := e.GetNetProfile()
-	np_prev := e.latest.Hardware.Net
-	if np_prev == nil {
-		np_prev = np
-	} else if np != nil {
-		ep.Hardware.Net = &cb.NetProfile{
-			BytesSent:   np.BytesSent - np_prev.BytesSent,
-			BytesRecv:   np.BytesRecv - np_prev.BytesRecv,
-			PacketsSent: np.PacketsSent - np_prev.PacketsSent,
-			PacketsRecv: np.PacketsRecv - np_prev.PacketsRecv,
-			Errin:       np.Errin - np_prev.Errin,
-			Errout:      np.Errout - np_prev.Errout,
-			Dropin:      np.Dropin - np_prev.Dropin,
-			Dropout:     np.Dropout - np_prev.Dropout,
-		}
-
-		np_prev = np
+	ep.Hardware.Net = &cb.NetProfile{
+		BytesSent:   np.BytesSent - npPrev.BytesSent,
+		BytesRecv:   np.BytesRecv - npPrev.BytesRecv,
+		PacketsSent: np.PacketsSent - npPrev.PacketsSent,
+		PacketsRecv: np.PacketsRecv - npPrev.PacketsRecv,
+		Errin:       np.Errin - npPrev.Errin,
+		Errout:      np.Errout - npPrev.Errout,
+		Dropin:      np.Dropin - npPrev.Dropin,
+		Dropout:     np.Dropout - npPrev.Dropout,
 	}
+	npPrev = np
 
 	runtime.ReadMemStats(MEMSTATS)
 	ep.Language = &cb.LanguageProfile{
@@ -134,6 +140,7 @@ func (e *environmentProfiler) GetEnvironmentProfile() *cb.EnvironmentalProfile {
 	e.latest.Next = ep.Timestamp
 	ep.Prev = e.latest.Timestamp
 	e.latest = ep
+	e.store[ep.Timestamp] = ep
 	e.lock.Unlock()
 
 	//fmt.Println("GetEnvironmentProfile()")

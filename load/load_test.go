@@ -10,17 +10,17 @@ import (
 func TestSearchHotel(t *testing.T) {
 	total := 8192
 	speed := 3000
-	cbcID := configure.CBCID_BYPASS
-	cbcTraceRatio := 100
+	cbcID := configure.CBCID_OBSERVATIONBYPASS
+	cbcTraceRatio := 0
 
 	tasks := []*taskSetting{
-		{total: total / 8, threads: 128, speed: speed, cbcID: configure.CBCID_LOGGINGYPASS, cbTraceRatio: 0}, // warm up
+		//{total: total / 8, threads: 128, speed: speed, cbcID: configure.CBCID_LOGGINGYPASS, cbTraceRatio: 0}, // warm up
 
 		// perf metric on
-		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
-		{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		{total: total, threads: 256, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
+		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
 
 		//{total: total, threads: 128, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
 		//{total: total, threads: 64, speed: speed, cbcID: cbcID, cbTraceRatio: cbcTraceRatio},
