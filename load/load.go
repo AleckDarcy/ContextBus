@@ -354,6 +354,9 @@ func searchHotel(random bool, task *taskSetting) {
 
 	worker(paras, random, task)
 
+	time.Sleep(10 * time.Second)
+
+	return
 	perfMetric, err := getMetric()
 	if err != nil {
 		fmt.Println("get metric fail:", err)
@@ -413,6 +416,9 @@ func searchHotel(random bool, task *taskSetting) {
 		latency[cb.Metric_Search_NearBy_Logic_4].Median,
 		lSearch, oSearch, tSearch,
 	)
+
+	b, _ := json.Marshal(perfMetric.CBLatency)
+	fmt.Println(string(b))
 }
 
 func recommend(random bool, task *taskSetting) {

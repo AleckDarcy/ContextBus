@@ -76,10 +76,16 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 			return
 		}
 
+		var start int64
+		if cb.PERF_METRIC {
+			start = time.Now().UnixNano()
+		}
+
 		pay := v.(*EventDataPayload)
+		var cntL_, cntT_, cntM_ int
 		if cfg := configure.Store.GetConfigure(pay.ctx.GetRequestContext().GetConfigureID()); cfg != nil {
 			if obs := cfg.GetObservationConfigure(pay.ed.Event.Recorder.Name); obs != nil {
-				cntL_, cntT_, cntM_ := obs.Do(pay.ctx, pay.ed)
+				cntL_, cntT_, cntM_ = obs.Do(pay.ctx, pay.ed)
 				cntL += cntL_
 				cntT += cntT_
 				cntM += cntM_
@@ -149,6 +155,23 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 					}
 				}
 			}
+		}
+
+		if cb.PERF_METRIC {
+			end := time.Now().UnixNano()
+
+			cbType := int64(0)
+			if cntL_ != 0 {
+				cbType |= cb.CBType_Logging
+			}
+			if cntT_ != 0 {
+				cbType |= cb.CBType_Tracing
+			}
+			if cntM_ != 0 {
+				cbType |= cb.CBType_Metrics
+			}
+
+			cb.PMetric.AddCBLatency(cbType, pay.ed.Event.When.Time, start, end)
 		}
 
 		cnt++

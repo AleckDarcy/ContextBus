@@ -33,9 +33,15 @@ const (
 	Metric_Search_NearBy_Logic_4
 
 	Metric_E
+
+	CBMetric_Len = Metric_E * 8192
 )
 
 var PERF_METRIC = false
+
+var MetricSize = 8192
+
+var PMetric *PerfMetric
 
 func init() {
 	tmpInt, err := strconv.Atoi(os.Getenv("PERF_METRIC"))
@@ -51,7 +57,14 @@ func NewPerfMetric(size int, from, to int) *PerfMetric {
 		return nil
 	}
 
-	metric := &PerfMetric{Latency: make([]*LatencyMetric, Metric_E)}
+	metric := &PerfMetric{
+		CBLatency: &CBLatencyMetric{
+			Total:   0,
+			Latency: make([]*CBLatency, CBMetric_Len),
+		},
+		Latency: make([]*LatencyMetric, Metric_E),
+	}
+
 	for i := from; i <= to; i++ {
 		metric.Latency[i] = &LatencyMetric{
 			Total:   0,
@@ -62,6 +75,39 @@ func NewPerfMetric(size int, from, to int) *PerfMetric {
 	}
 
 	return metric
+}
+
+const (
+	CBType_Logging = int64(1) << iota
+	CBType_Tracing
+	CBType_Metrics
+)
+
+func (m *PerfMetric) AddCBLatency(cbType int64, enQueue, deQueue, end int64) {
+	if !PERF_METRIC {
+		return
+	}
+
+	if m == nil || m.CBLatency == nil {
+		return
+	}
+
+	cbLat := m.CBLatency
+	// todo multi-thread
+	lat := &CBLatency{
+		Type:    cbType,
+		Channel: float64(deQueue - enQueue),
+		Process: float64(end - deQueue),
+	}
+
+	cbLat.Latency = append(cbLat.Latency, lat)
+	cbLat.Total++
+
+	if cbLat.FirstEnqueue == 0 {
+		cbLat.FirstEnqueue = enQueue
+	}
+
+	cbLat.LastFinished = end
 }
 
 func (m *PerfMetric) AddLatency(idx int, value float64) {
@@ -86,7 +132,20 @@ func (m *PerfMetric) Calculate() *PerfMetric {
 		return nil
 	}
 
-	res := &PerfMetric{Latency: make([]*LatencyMetric, Metric_E)}
+	res := &PerfMetric{
+		CBLatency: &CBLatencyMetric{
+			Total:        m.CBLatency.Total,
+			Latency:      make([]*CBLatency, m.CBLatency.Total),
+			FirstEnqueue: m.CBLatency.FirstEnqueue,
+			LastFinished: m.CBLatency.LastFinished,
+		},
+		Latency: make([]*LatencyMetric, Metric_E),
+	}
+
+	copy(res.CBLatency.Latency, m.CBLatency.Latency)
+	m.CBLatency.Total = 0
+	m.CBLatency.Latency = m.CBLatency.Latency[0:0]
+
 	for i := 0; i < Metric_E; i++ {
 		srcLatI := m.Latency[i]
 		if srcLatI == nil {

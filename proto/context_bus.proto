@@ -501,8 +501,23 @@ message LatencyMetric {
     double max              = 6;
 }
 
+message CBLatency {
+    int64 type     = 1;
+    double channel = 2; // from enqueue to dequeue
+    double process = 3; // conversion
+}
+
+message CBLatencyMetric {
+    int64 total                = 1; // for multi-thread id generation
+    repeated CBLatency latency = 2;
+
+    int64 firstEnqueue = 11;
+    int64 LastFinished = 12;
+}
+
 message PerfMetric {
-    repeated LatencyMetric latency = 1;
+    CBLatencyMetric CB_latency     = 1; // latency from observational data submission to finalization
+    repeated LatencyMetric latency = 2; // latency of service handler
 }
 
 message Payload {
@@ -517,5 +532,8 @@ message Payload {
     MessageType m_type  = 12;
     string uuid         = 13;
 
-    PerfMetric metric = 21;
+    // control-level
+    bool back_sample = 21;
+
+    PerfMetric metric = 101;
 }
