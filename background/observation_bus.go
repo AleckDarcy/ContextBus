@@ -25,6 +25,7 @@ import (
 // EventDataPayload is the package of event data inside LockFreeQueue
 type EventDataPayload struct {
 	ctx *context.Context
+	cfg *configure.Configure
 	ed  *cb.EventData
 }
 
@@ -48,9 +49,10 @@ func (b *observationBus) NewEventID() uint64 {
 	return atomic.AddUint64(&b.eveID, 1)
 }
 
-func (b *observationBus) OnSubmit(ctx *context.Context, ed *cb.EventData) {
+func (b *observationBus) OnSubmit(ctx *context.Context, cfg *configure.Configure, ed *cb.EventData) {
 	b.queue.Enqueue(&EventDataPayload{
 		ctx: ctx,
+		cfg: cfg,
 		ed:  ed,
 	})
 
@@ -83,7 +85,7 @@ func (b *observationBus) doObservation() (cnt, cntL, cntT, cntM int) {
 
 		pay := v.(*EventDataPayload)
 		var cntL_, cntT_, cntM_ int
-		if cfg := configure.Store.GetConfigure(pay.ctx.GetRequestContext().GetConfigureID()); cfg != nil {
+		if cfg := pay.cfg; cfg != nil {
 			if obs := cfg.GetObservationConfigure(pay.ed.Event.Recorder.Name); obs != nil {
 				cntL_, cntT_, cntM_ = obs.Do(pay.ctx, pay.ed)
 				cntL += cntL_

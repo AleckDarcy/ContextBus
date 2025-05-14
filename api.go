@@ -138,5 +138,5 @@ func OnSubmission(ctx *cb_context.Context, where *cb.EventWhere, who *cb.EventRe
 	}
 
 	// push EventData to bus
-	background.ObservationBus.OnSubmit(ctx, ed)
+	background.ObservationBus.OnSubmit(ctx, cfg, ed)
 }

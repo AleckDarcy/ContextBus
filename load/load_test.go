@@ -9,8 +9,8 @@ import (
 
 func TestSearchHotel(t *testing.T) {
 	total := 8192
-	speed := 3000
-	cbcID := configure.CBCID_DEFAULT
+	speed := 900
+	cbcID := configure.CBCID_BYPASS
 	cbcTraceRatio := 20
 
 	tasks := []*taskSetting{

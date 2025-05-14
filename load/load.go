@@ -252,14 +252,18 @@ func client(reqPool chan *request, resPool chan *result, signal chan struct{}) {
 			} else if req.para.method == http.MethodPost {
 				resp, err = http.Post(req.para.path, "application/x-www-form-urlencoded", nil)
 			}
+
+			//bytes, _ := ioutil.ReadAll(resp.Body)
+			//fmt.Println(string(bytes))
+
 			end := time.Now().UnixNano()
 			res.latency = end - start
 
 			if err != nil {
 				res.err = true
-				if rand.Int()%100 == 1 {
-					log.Print(err)
-				}
+				//if rand.Int()%100 == 1 {
+				log.Print(err)
+				//}
 			} else {
 				resp.Body.Close()
 			}
@@ -306,8 +310,10 @@ func worker(paras *params, random bool, task *taskSetting) {
 
 		endI := time.Now().UnixNano()
 		if endI < expEndI && i != task.total {
-			fmt.Println("sleep for", time.Duration(expEndI-endI))
+			fmt.Println(i, "sleep for", time.Duration(expEndI-endI))
 			time.Sleep(time.Duration(expEndI - endI))
+		} else {
+			fmt.Println(i)
 		}
 	}
 
@@ -353,8 +359,6 @@ func searchHotel(random bool, task *taskSetting) {
 	}
 
 	worker(paras, random, task)
-
-	time.Sleep(10 * time.Second)
 
 	return
 	perfMetric, err := getMetric()
