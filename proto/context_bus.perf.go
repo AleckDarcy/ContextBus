@@ -44,7 +44,7 @@ var MetricSize = 8192
 var PMetric *PerfMetric
 
 func init() {
-	tmpInt, err := strconv.Atoi(os.Getenv("PERF_METRIC"))
+	tmpInt, err := strconv.Atoi(os.Getenv("CB_PERF_METRIC"))
 	if err != nil {
 		fmt.Println("lookup PERF_METRIC from env fail:", err)
 	} else {
